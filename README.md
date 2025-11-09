@@ -286,3 +286,76 @@ homework_3/
 
 如有问题或建议，请提交Issue。
 
+## 故障排查与补充文档
+
+下面是从项目其它文档合并的常见问题与解决步骤（已合并为最终文档）。
+
+### 语音 / 麦克风 问题
+
+- 浏览器必须在安全上下文下才能访问麦克风：使用 `http://localhost:8080` 或 `https://`，不要直接使用局域网 IP（除非已配置 HTTPS）。
+- 检查浏览器麦克风权限（地址栏锁图标），并允许麦克风访问。
+- 关闭其他可能占用麦克风的应用（Zoom、Teams、微信、系统录音等）。
+- Windows: 检查“设置 → 隐私 → 麦克风”，允许桌面应用访问麦克风。
+- 如果遇到 `NotReadableError` / `NotAllowedError` 等，尝试换浏览器或重启浏览器/电脑。
+- 调试脚本（在浏览器 Console 中运行）：
+
+```javascript
+navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(stream => { stream.getTracks().forEach(t => t.stop()); console.log('Microphone OK'); })
+    .catch(err => console.error('Microphone error:', err));
+```
+
+### Supabase 连接问题
+
+- 如果 Supabase 初始化失败，常见原因是 `supabase-py` 与依赖版本不匹配。尝试安装受支持的版本：
+
+```bash
+pip uninstall supabase -y
+pip install supabase==2.3.4
+```
+
+- 如果仍异常，建议在虚拟环境中重新安装依赖：
+
+```powershell
+# Windows
+python -m venv .venv
+.venv\\Scripts\\activate
+pip install -r requirements.txt
+```
+
+- 提示性测试脚本（`test_supabase.py` 已包含在仓库）可用于本地验证：
+
+```bash
+python test_supabase.py
+```
+
+### SSL / DeepSeek (Ark) 连接问题
+
+- 如果在调用火山方舟（Ark）API时遇到 SSL 握手超时或 EOF 错误（例如 `_ssl.c:1000`），可能是本地 CA 不完整、网络中间件拦截（公司防火墙）或 SDK TLS 配置有问题。
+- 调试步骤：
+    1. 升级证书包：`pip install --upgrade certifi`
+    2. 在本地临时禁用 SSL 验证（仅用于排查）：在 PowerShell 设置环境变量 ` $env:DISABLE_SSL_VERIFY = '1' ` 然后运行应用；如果禁用后能成功，说明是证书/中间件问题。
+    3. 使用 `certifi.where()` 的路径作为 `REQUESTS_CA_BUNDLE`：
+
+```powershell
+$env:REQUESTS_CA_BUNDLE = (python -c "import certifi; print(certifi.where())")
+python app.py
+```
+
+    4. 如果回退请求（README 中的回退逻辑）仍失败，请把完整的 SDK 错误和回退请求错误粘贴出来以便进一步排查。
+
+### 服务器与启动说明（摘录）
+
+- 开发启动：`python run.py` 或 `python app.py`，默认监听 `http://localhost:8080`。
+- 看到 `Running on http://127.0.0.1:8080` 即表示服务已正常启动。
+- 开发时看到的 Werkzeug 警告（提示开发服务器不适合生产）可以忽略；生产请使用 Waitress/Gunicorn 并配置 HTTPS。
+
+### 需要保留的配置项（.env）
+
+- `ARK_API_KEY` - 火山方舟 API Key
+- `ARK_BASE_URL` - 火山方舟 REST 基础 URL（回退使用）
+- `DEEPSEEK_MODEL` - 使用的模型 ID（确保在控制台已开通）
+- `DISABLE_SSL_VERIFY` - 调试时可设置为 `1` 临时禁用 SSL 验证（不推荐在生产环境使用）
+
+如果你需要，我可以把这些关键配置写入 `.env.example` 或 `README.md` 的配置示例中。
+
