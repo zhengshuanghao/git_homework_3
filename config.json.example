@@ -1,0 +1,15 @@
+{
+  "IFLYTEK_APP_ID": "c80a4c00",
+  "IFLYTEK_API_KEY": "be6071e8028efa1bac85a18023221559",
+  "IFLYTEK_API_SECRET": "OTcyNDQ5ZTI0MjUzNDg0ZTUxODViNjcw",
+  "AMAP_API_KEY": "62b0a02ed7213d7753d65007051c0c6f",
+  "AMAP_API_SECRET": "66a262e19c64cdc1109b2c70dd89fee0",
+  "DEEPSEEK_API_KEY": "sk-ef1bae9821a140baaafca8f4ed3495bb",
+  "DEEPSEEK_BASE_URL": "https://api.deepseek.com",
+  "SUPABASE_URL": "",
+  "SUPABASE_KEY": ""
+}
+
+
+
+
