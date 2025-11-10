@@ -3,9 +3,7 @@ let map = null;
 let markers = [];
 let currentUser = null;
 let socket = null;
-let mediaRecorder = null;
-let audioChunks = [];
-let isRecording = false;
+// isRecording 现在由 audio-recorder.js 管理
 
 // 初始化
 document.addEventListener('DOMContentLoaded', async function() {
@@ -66,18 +64,71 @@ function initSocket() {
         console.log('Socket connected');
     });
     
-    socket.on('recognition_interim', (data) => {
-        document.getElementById('recognitionResult').textContent = data.text;
-    });
-    
-    socket.on('recording_result', (data) => {
-        document.getElementById('recognitionResult').textContent = data.text;
-        document.getElementById('travelInput').value = data.text;
-        stopRecordingUI();
+    // 语音识别结果（统一处理临时和最终结果）
+    socket.on('recognition_result', (data) => {
+        const resultElement = document.getElementById('recognitionResult');
+        const inputElement = document.getElementById('travelInput');
+        const voiceBtn = document.getElementById('generatePlanFromVoiceBtn');
+        
+        const text = data.text;
+        const isFinal = data.is_final;
+        
+        console.log(`[语音识别] ${isFinal ? '最终' : '临时'}结果:`, text);
+        
+        if (text && text.trim()) {
+            // 显示识别结果
+            if (resultElement) {
+                if (isFinal) {
+                    resultElement.textContent = '识别结果：' + text;
+                    resultElement.style.color = '#2ecc71'; // 绿色表示成功
+                    
+                    // 最终结果时显示"生成旅行计划"按钮
+                    if (voiceBtn) {
+                        voiceBtn.style.display = 'block';
+                    }
+                } else {
+                    resultElement.textContent = '识别中：' + text;
+                    resultElement.style.color = '#3498db'; // 蓝色表示识别中
+                }
+            }
+            
+            // 填充到文本输入框（临时和最终都填充）
+            if (inputElement) {
+                inputElement.value = text;
+            }
+        }
     });
     
     socket.on('error', (data) => {
         alert('错误: ' + data.message);
+        stopRecordingUI();
+    });
+
+    socket.on('recognition_text', (data) => {
+        console.log('[豆包文本]', data.text);
+        const resultElement = document.getElementById('recognitionResult');
+        if (resultElement) {
+            resultElement.textContent += data.text;
+            resultElement.style.color = '#2ecc71'; // 绿色
+        }
+        
+        // 也更新到输入框
+        const inputElement = document.getElementById('travelInput');
+        if (inputElement) {
+            inputElement.value += data.text;
+        }
+    });
+
+    socket.on('audio_output', (data) => {
+        console.log('[豆包音频] 收到音频:', data.audio.length, '字节');
+        // 播放豆包返回的语音
+        if (window.DoubaoAudio) {
+            window.DoubaoAudio.playPCMAudio(data.audio, data.sample_rate);
+        }
+    });
+    
+    socket.on('recording_stopped', (data) => {
+        console.log('[豆包] 对话已停止:', data.message);
         stopRecordingUI();
     });
 }
@@ -151,6 +202,7 @@ function initEventListeners() {
     
     // 生成计划
     document.getElementById('generatePlanBtn').addEventListener('click', generateTravelPlan);
+    document.getElementById('generatePlanFromVoiceBtn').addEventListener('click', generateTravelPlan);
     
     // 语音录制
     document.getElementById('recordBtn').addEventListener('click', startRecording);
@@ -201,209 +253,91 @@ function switchInputMethod(method) {
 // 开始录音
 async function startRecording() {
     try {
-        // 检查浏览器是否支持 getUserMedia
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            throw new Error('您的浏览器不支持麦克风访问功能。请使用 Chrome、Firefox 或 Edge 等现代浏览器。');
+        // 清空之前的结果
+        const resultElement = document.getElementById('recognitionResult');
+        if (resultElement) {
+            resultElement.textContent = '';
+            resultElement.style.color = '#666';
+        }
+        const voiceBtn = document.getElementById('generatePlanFromVoiceBtn');
+        if (voiceBtn) {
+            voiceBtn.style.display = 'none';
         }
         
-        // 检查是否在安全上下文中（HTTPS 或 localhost）
-        const isSecureContext = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-        if (!isSecureContext) {
-            throw new Error('麦克风访问需要安全连接（HTTPS）。请使用 https:// 访问，或在 localhost 上运行。');
+        // 检查录音模块
+        if (!window.AudioRecorder) {
+            throw new Error('录音模块未加载');
         }
         
-        // 首先尝试获取所有可用的音频设备
-        let audioInputs = [];
-        try {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            audioInputs = devices.filter(device => device.kind === 'audioinput');
-            console.log('可用的音频输入设备:', audioInputs.length);
-            if (audioInputs.length === 0) {
-                throw new Error('未找到音频输入设备。请检查麦克风是否已连接并启用。');
-            }
-        } catch (err) {
-            console.warn('枚举设备失败，继续尝试:', err);
-        }
+        // 通知服务器开始录音
+        socket.emit('start_recording');
         
-        // 请求麦克风权限（先尝试简单配置）
-        let stream;
-        let lastError;
-        
-        // 尝试策略1: 使用完整配置
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: {
-                    sampleRate: 16000,
-                    channelCount: 1,
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: true
-                } 
-            });
-        } catch (err) {
-            lastError = err;
-            console.warn('完整配置失败，尝试简化配置:', err.name);
+        // 等待服务器确认
+        await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error('服务器响应超时')), 5000);
             
-            // 尝试策略2: 使用基本配置
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: {
-                        echoCancellation: true,
-                        noiseSuppression: true
-                    } 
-                });
-            } catch (err2) {
-                lastError = err2;
-                console.warn('基本配置失败，尝试最简配置:', err2.name);
-                
-                // 尝试策略3: 使用最简配置
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({ 
-                        audio: true
-                    });
-                } catch (err3) {
-                    lastError = err3;
-                    // 所有尝试都失败，提供详细错误信息
-                    let errorMsg = '无法访问麦克风。\n\n';
-                    
-                    if (err3.name === 'NotAllowedError' || err3.name === 'PermissionDeniedError') {
-                        errorMsg += '❌ 麦克风权限被拒绝\n\n';
-                        errorMsg += '解决方法：\n';
-                        errorMsg += '1. 点击地址栏左侧的锁图标或信息图标\n';
-                        errorMsg += '2. 找到"麦克风"权限，设置为"允许"\n';
-                        errorMsg += '3. 刷新页面后重试\n';
-                        errorMsg += '4. 如果仍然不行，检查系统设置中的麦克风权限';
-                    } else if (err3.name === 'NotFoundError' || err3.name === 'DevicesNotFoundError') {
-                        errorMsg += '❌ 未找到麦克风设备\n\n';
-                        errorMsg += '解决方法：\n';
-                        errorMsg += '1. 检查麦克风是否已正确连接\n';
-                        errorMsg += '2. 检查系统设置中的麦克风是否已启用\n';
-                        errorMsg += '3. 尝试拔插麦克风设备\n';
-                        errorMsg += '4. 重启浏览器';
-                    } else if (err3.name === 'NotReadableError' || err3.name === 'TrackStartError') {
-                        errorMsg += '❌ 无法读取麦克风\n\n';
-                        errorMsg += '可能的原因：\n';
-                        errorMsg += '1. 麦克风被其他应用占用（Zoom、Teams、Skype等）\n';
-                        errorMsg += '2. 浏览器其他标签页正在使用麦克风\n';
-                        errorMsg += '3. 系统权限问题\n';
-                        errorMsg += '4. 麦克风驱动程序问题\n\n';
-                        errorMsg += '解决方法：\n';
-                        errorMsg += '1. 关闭所有其他使用麦克风的应用\n';
-                        errorMsg += '2. 关闭浏览器中其他可能使用麦克风的标签页\n';
-                        errorMsg += '3. 检查 Windows 设置 → 隐私 → 麦克风\n';
-                        errorMsg += '4. 重启浏览器\n';
-                        errorMsg += '5. 如果问题持续，尝试重启电脑';
-                    } else if (err3.name === 'OverconstrainedError' || err3.name === 'ConstraintNotSatisfiedError') {
-                        errorMsg += '❌ 麦克风不支持请求的配置\n\n';
-                        errorMsg += '解决方法：\n';
-                        errorMsg += '1. 尝试使用不同的麦克风设备\n';
-                        errorMsg += '2. 更新麦克风驱动程序\n';
-                        errorMsg += '3. 检查麦克风设置';
-                    } else if (err3.name === 'SecurityError') {
-                        errorMsg += '❌ 安全错误\n\n';
-                        errorMsg += '解决方法：\n';
-                        errorMsg += '1. 确保使用 http://localhost:8080 访问（不要使用 IP 地址）\n';
-                        errorMsg += '2. 或者使用 https:// 协议\n';
-                        errorMsg += '3. 检查浏览器安全设置';
-                    } else {
-                        errorMsg += `❌ 错误类型: ${err3.name}\n`;
-                        errorMsg += `错误消息: ${err3.message}\n\n`;
-                        errorMsg += '请检查：\n';
-                        errorMsg += '1. 浏览器控制台是否有更多错误信息\n';
-                        errorMsg += '2. 系统事件查看器中是否有相关错误\n';
-                        errorMsg += '3. 麦克风设备是否正常工作';
-                    }
-                    
-                    throw new Error(errorMsg);
-                }
-            }
-        }
-        
-        // 检查流是否有效
-        if (!stream || stream.getAudioTracks().length === 0) {
-            throw new Error('无法获取有效的音频流。');
-        }
-        
-        // 确定可用的 MIME 类型
-        let mimeType = 'audio/webm';
-        const supportedTypes = [
-            'audio/webm;codecs=opus',
-            'audio/webm',
-            'audio/ogg;codecs=opus',
-            'audio/mp4'
-        ];
-        
-        for (const type of supportedTypes) {
-            if (MediaRecorder.isTypeSupported(type)) {
-                mimeType = type;
-                break;
-            }
-        }
-        
-        mediaRecorder = new MediaRecorder(stream, {
-            mimeType: mimeType
+            socket.once('recording_started', (data) => {
+                clearTimeout(timeout);
+                console.log('[语音识别] 服务器已启动:', data.message);
+                resolve();
+            });
+            
+            socket.once('error', (data) => {
+                clearTimeout(timeout);
+                reject(new Error(data.message));
+            });
         });
         
-        audioChunks = [];
+        // 启动流式录音
+        await window.AudioRecorder.startStreamingRecording(socket);
         
-        mediaRecorder.ondataavailable = (event) => {
-            if (event.data && event.data.size > 0) {
-                audioChunks.push(event.data);
-                // 将音频数据转换为PCM格式并发送
-                convertAndSendAudio(event.data);
-            }
-        };
+        // UI更新（isRecording 状态由 AudioRecorder 管理）
+        document.getElementById('recordBtn').classList.add('recording');
+        document.getElementById('recordingStatus').style.display = 'flex';
         
-        mediaRecorder.onstop = () => {
-            stream.getTracks().forEach(track => track.stop());
-        };
-        
-        mediaRecorder.onerror = (event) => {
-            console.error('MediaRecorder 错误:', event.error);
-            stopRecording();
-            alert('录音过程中发生错误: ' + (event.error?.message || '未知错误'));
-        };
-        
-        // 启动录音（每100ms收集一次数据）
-        try {
-            mediaRecorder.start(100);
-            isRecording = true;
-            
-            // UI更新
-            document.getElementById('recordBtn').classList.add('recording');
-            document.getElementById('recordingStatus').style.display = 'flex';
-            document.getElementById('recognitionResult').textContent = '';
-            
-            // 通知服务器开始录音
-            socket.emit('start_recording');
-            
-            console.log('录音已开始，MIME类型:', mimeType);
-        } catch (err) {
-            stream.getTracks().forEach(track => track.stop());
-            throw new Error('启动录音失败: ' + err.message);
-        }
+        console.log('[语音识别] 录音已启动');
         
     } catch (error) {
-        console.error('录音失败:', error);
-        const errorMsg = error.message || '无法访问麦克风，请检查权限设置';
-        alert(errorMsg);
+        console.error('[语音识别] 录音失败:', error);
+        
+        // 显示更友好的错误提示
+        const errorMsg = error.message || '无法启动语音识别';
+        if (errorMsg.includes('404') || errorMsg.includes('rejected')) {
+            alert('语音识别服务暂时不可用。请使用文字输入模式，或稍后重试。\n\n提示：您可以切换到"文字输入"模式直接输入旅行需求。');
+        } else {
+            alert(errorMsg);
+        }
+        
         stopRecordingUI();
+        
+        // 自动切换到文字输入模式
+        switchInputMethod('text');
     }
 }
 
 // 停止录音
 function stopRecording() {
-    if (mediaRecorder && isRecording) {
+    if (window.AudioRecorder && window.AudioRecorder.isRecording) {
         try {
-            if (mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
+            // 停止流式录音
+            window.AudioRecorder.stopStreamingRecording();
+            
+            // 通知服务器停止
+            socket.emit('stop_recording');
+            
+            stopRecordingUI();
+            
+            console.log('[语音识别] 录音已停止');
+            
+            // 显示"生成旅行计划"按钮
+            const voiceBtn = document.getElementById('generatePlanFromVoiceBtn');
+            if (voiceBtn) {
+                voiceBtn.style.display = 'block';
             }
+            
         } catch (err) {
-            console.error('停止录音失败:', err);
+            console.error('[语音识别] 停止录音失败:', err);
         }
-        isRecording = false;
-        socket.emit('stop_recording');
-        stopRecordingUI();
     }
 }
 
@@ -413,49 +347,23 @@ function stopRecordingUI() {
     document.getElementById('recordingStatus').style.display = 'none';
 }
 
-// 转换并发送音频数据
+// 转换并发送音频数据（简化版：直接发送WebM让后端处理）
 async function convertAndSendAudio(audioBlob) {
     try {
-        // 使用AudioContext将音频转换为PCM格式
-        const arrayBuffer = await audioBlob.arrayBuffer();
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)({
-            sampleRate: 16000
-        });
-        
-        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        
-        // 转换为单声道
-        const channelData = audioBuffer.getChannelData(0);
-        
-        // 转换为16bit PCM
-        const pcmData = new Int16Array(channelData.length);
-        for (let i = 0; i < channelData.length; i++) {
-            // 限制范围在-1到1之间，然后转换为16bit整数
-            const s = Math.max(-1, Math.min(1, channelData[i]));
-            pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-        }
-        
-        // 转换为Base64（分块处理避免内存问题）
-        const pcmBytes = new Uint8Array(pcmData.buffer);
-        let binaryString = '';
-        const chunkSize = 8192;
-        for (let i = 0; i < pcmBytes.length; i += chunkSize) {
-            const chunk = pcmBytes.slice(i, i + chunkSize);
-            binaryString += String.fromCharCode.apply(null, chunk);
-        }
-        const base64Audio = btoa(binaryString);
-        
-        // 发送PCM数据
-        socket.emit('audio_data', base64Audio);
-    } catch (error) {
-        console.error('音频转换失败，使用原始格式:', error);
-        // 如果转换失败，发送原始WebM数据（后端会尝试转换）
+        // 直接发送 WebM 格式，让后端用 pydub/ffmpeg 转换
+        // 这样更可靠，避免前端 AudioContext 兼容性问题
         const reader = new FileReader();
         reader.onloadend = () => {
             const base64Audio = reader.result.split(',')[1];
             socket.emit('audio_data', base64Audio);
+            console.log('✓ 发送音频数据:', audioBlob.size, '字节 (WebM格式)');
+        };
+        reader.onerror = (error) => {
+            console.error('✗ 读取音频文件失败:', error);
         };
         reader.readAsDataURL(audioBlob);
+    } catch (error) {
+        console.error('✗ 音频发送失败:', error);
     }
 }
 

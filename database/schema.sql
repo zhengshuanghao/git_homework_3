@@ -68,3 +68,9 @@ CREATE POLICY "Users can delete own expenses" ON expenses
 
 
 
+
+
+
+
+
+

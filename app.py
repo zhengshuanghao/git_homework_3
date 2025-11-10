@@ -8,11 +8,11 @@ import os
 import json
 
 from config import Config
-from services.iflytek_service import IflytekService
+from services.speech_recognition_service import SpeechRecognitionSyncWrapper
 from services.deepseek_service import DeepSeekService
 from services.supabase_service import SupabaseService
 from services.amap_service import AmapService
-from services.audio_converter import AudioConverter
+import base64
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.config.from_object(Config)
@@ -20,7 +20,12 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # 初始化服务
-iflytek_service = IflytekService()
+speech_recognition_service = SpeechRecognitionSyncWrapper(
+    app_id=Config.SPEECH_APP_ID,
+    access_key=Config.SPEECH_ACCESS_KEY,
+    secret_key=Config.SPEECH_SECRET_KEY,
+    model_id=Config.SPEECH_MODEL_ID
+)
 deepseek_service = DeepSeekService()
 supabase_service = SupabaseService()
 amap_service = AmapService()
@@ -194,51 +199,84 @@ def handle_connect():
 
 @socketio.on('start_recording')
 def handle_start_recording():
-    """开始录音"""
-    if not iflytek_service.is_configured():
-        emit('error', {'message': '语音识别服务未配置'})
-        return
-    
+    """开始语音识别"""
     try:
-        iflytek_service.start_recording(socketio)
-        emit('recording_started', {'status': 'success'})
+        # 定义回调函数
+        def on_result(result):
+            """接收到识别结果"""
+            text = result.get('text', '')
+            is_final = result.get('is_final', False)
+            
+            socketio.emit('recognition_result', {
+                'text': text,
+                'is_final': is_final
+            })
+            print(f"[语音识别] {'最终' if is_final else '临时'}结果: {text}")
+        
+        def on_error(error_msg):
+            """接收到错误"""
+            socketio.emit('error', {'message': error_msg})
+            print(f"[X] 语音识别错误: {error_msg}")
+        
+        # 启动语音识别服务
+        speech_recognition_service.start(
+            on_result=on_result,
+            on_error=on_error
+        )
+        
+        # 检查是否成功连接
+        if not speech_recognition_service.is_connected:
+            raise Exception("语音识别服务连接失败")
+        
+        emit('recording_started', {'status': 'success', 'message': '语音识别已启动，请开始说话'})
+        print("[OK] 语音识别已启动")
+        
     except Exception as e:
-        emit('error', {'message': str(e)})
+        emit('error', {'message': f'启动语音识别失败: {str(e)}'})
+        print(f"[X] 启动语音识别失败: {str(e)}")
 
 @socketio.on('audio_data')
 def handle_audio_data(data):
-    """接收音频数据（WebM格式，需要转换为PCM）"""
+    """接收音频数据并发送给语音识别服务（流式）"""
     try:
-        # 如果数据是Base64编码的WebM格式，需要先转换
-        if isinstance(data, str):
-            # 尝试转换为PCM格式
-            try:
-                # 新方法，自动检测格式，默认提示为webm
-                pcm_data = AudioConverter.base64_audio_to_pcm(data, format_hint='webm')
-                iflytek_service.send_audio_data(pcm_data)
-            except Exception as e:
-                # 如果转换失败，尝试直接发送（可能是已经是PCM格式）
-                print(f"音频转换失败，尝试直接发送: {str(e)}")
-                iflytek_service.send_audio_data(data)
-        else:
-            iflytek_service.send_audio_data(data)
+        if not speech_recognition_service.is_connected:
+            print("[WARN] 语音识别服务未连接，忽略音频数据")
+            return
+        
+        # 发送音频数据到语音识别服务
+        speech_recognition_service.send_audio(data)
+        # print(f"[语音识别] 已发送音频数据")
+        
     except Exception as e:
+        print(f"[X] 处理音频数据错误: {str(e)}")
         emit('error', {'message': str(e)})
 
 @socketio.on('stop_recording')
 def handle_stop_recording():
-    """停止录音"""
+    """停止语音识别"""
     try:
-        result = iflytek_service.stop_recording()
-        emit('recording_result', {'text': result})
+        if speech_recognition_service.is_connected:
+            speech_recognition_service.stop()
+            emit('recording_stopped', {'status': 'success', 'message': '语音识别已结束'})
+            print("[OK] 语音识别已停止")
+        else:
+            print("[WARN] 语音识别服务未连接")
     except Exception as e:
-        emit('error', {'message': str(e)})
+        print(f"[X] 停止语音识别失败: {str(e)}")
+        emit('error', {'message': f'停止语音识别失败: {str(e)}'})
 
 if __name__ == '__main__':
     # 从文件加载配置
     Config.load_from_file()
     
+    print("=" * 60)
+    print("AI旅行规划师 - 火山方舟流式语音识别版")
+    print("=" * 60)
+    print(f"服务器地址: http://localhost:8080")
+    print(f"语音服务: 火山方舟流式语音识别大模型")
+    print("=" * 60)
+    print("\n正在启动服务器...\n")
+    
     # 启动应用
-    # 注意: 警告信息是 Flask 开发服务器的正常提示，不影响功能
     socketio.run(app, debug=True, host='0.0.0.0', port=8080)
 

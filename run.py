@@ -14,10 +14,12 @@ if __name__ == '__main__':
     # 加载配置文件
     Config.load_from_file()
     
-    # 检查必要的配置
+    # 检查必要的配置（语音识别版本）
     missing_configs = []
-    if not Config.IFLYTEK_APP_ID:
-        missing_configs.append("科大讯飞 APP ID")
+    if not Config.SPEECH_APP_ID:
+        missing_configs.append("语音识别 APP ID")
+    if not Config.SPEECH_ACCESS_KEY:
+        missing_configs.append("语音识别 Access Key")
     if not Config.AMAP_API_KEY:
         missing_configs.append("高德地图 API Key")
     if not Config.DEEPSEEK_API_KEY:
@@ -34,15 +36,15 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             sys.exit(0)
     
-    print("=" * 50)
-    print("AI旅行规划师")
-    print("=" * 50)
+    print("=" * 60)
+    print("AI旅行规划师 - 火山方舟流式语音识别版")
+    print("=" * 60)
     print(f"服务器地址: http://localhost:8080")
     print(f"网络地址: http://0.0.0.0:8080")
-    print("=" * 50)
+    print(f"语音服务: 火山方舟流式语音识别大模型")
+    print("=" * 60)
     print("提示: 这是开发服务器，仅用于开发和测试")
-    print("提示: 出现的警告信息是正常的，可以安全忽略")
-    print("=" * 50)
+    print("=" * 60)
     print("\n正在启动服务器...\n")
     
     # 启动应用

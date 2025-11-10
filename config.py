@@ -15,10 +15,11 @@ class Config:
     # Flask配置
     SECRET_KEY = os.getenv('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
     
-    # 科大讯飞配置
-    IFLYTEK_APP_ID = os.getenv('IFLYTEK_APP_ID', '')
-    IFLYTEK_API_KEY = os.getenv('IFLYTEK_API_KEY', '')
-    IFLYTEK_API_SECRET = os.getenv('IFLYTEK_API_SECRET', '')
+    # 火山方舟流式语音识别配置
+    SPEECH_APP_ID = os.getenv('SPEECH_APP_ID', '')
+    SPEECH_ACCESS_KEY = os.getenv('SPEECH_ACCESS_KEY', '')
+    SPEECH_SECRET_KEY = os.getenv('SPEECH_SECRET_KEY', '')
+    SPEECH_MODEL_ID = os.getenv('SPEECH_MODEL_ID', 'Speech_Recognition_Seed_streaming2000000451913596898')
     
     # 高德地图配置
     AMAP_API_KEY = os.getenv('AMAP_API_KEY', '')
@@ -52,9 +53,10 @@ class Config:
     def save_to_file(cls, filepath='config.json'):
         """保存配置到JSON文件"""
         config_data = {
-            'IFLYTEK_APP_ID': cls.IFLYTEK_APP_ID,
-            'IFLYTEK_API_KEY': cls.IFLYTEK_API_KEY,
-            'IFLYTEK_API_SECRET': cls.IFLYTEK_API_SECRET,
+            'SPEECH_APP_ID': cls.SPEECH_APP_ID,
+            'SPEECH_ACCESS_KEY': cls.SPEECH_ACCESS_KEY,
+            'SPEECH_SECRET_KEY': cls.SPEECH_SECRET_KEY,
+            'SPEECH_MODEL_ID': cls.SPEECH_MODEL_ID,
             'AMAP_API_KEY': cls.AMAP_API_KEY,
             'AMAP_API_SECRET': cls.AMAP_API_SECRET,
             'DEEPSEEK_API_KEY': cls.DEEPSEEK_API_KEY,
@@ -77,6 +79,9 @@ class Config:
         for key, value in config_dict.items():
             if hasattr(cls, key.upper()):
                 setattr(cls, key.upper(), value)
+
+
+
 
 
 
