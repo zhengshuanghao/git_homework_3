@@ -1,4 +1,4 @@
-﻿# 🗺️ AI旅行规划师
+# 🗺️ AI旅行规划师
 
 <div align="center">
 
@@ -97,7 +97,7 @@ cp .env.example .env
 docker-compose up -d
 ```
 
-📖 详细说明请查看：[Docker部署指南](DOCKER_DEPLOYMENT.md)
+📖 详细说明请查看：[给助教的使用说明](给助教的使用说明.md)
 
 ---
 
@@ -148,9 +148,6 @@ ALTER TABLE expenses DISABLE ROW LEVEL SECURITY;
 ```bash
 # Windows
 快速启动.bat
-
-# 或使用Python
-python run.py
 ```
 
 **方式二：直接运行**
@@ -243,12 +240,11 @@ python app.py
 
 ```
 homework_3/
-├── 📄 app.py                    # Flask主应用
+├── 📄 app.py                    # Flask主应用（包含启动逻辑）
 ├── ⚙️ config.py                 # 配置管理
-├── 🚀 run.py                    # 启动脚本
 ├── 📦 requirements.txt          # Python依赖
 ├── 🔐 .env                      # 环境变量（需自行创建）
-├── 🪟 快速启动.bat              # Windows快速启动
+├── 🪟 快速启动.bat              # Windows快速启动脚本
 ├── 📁 database/
 │   └── schema.sql              # 数据库结构
 ├── 📁 services/                # 服务层
@@ -346,9 +342,9 @@ ALTER TABLE expenses DISABLE ROW LEVEL SECURITY;
 
 **解决方案**：
 - 方式一：关闭占用8080端口的程序
-- 方式二：修改 `run.py` 中的端口号：
+- 方式二：修改 `app.py` 中的端口号（文件末尾）：
   ```python
-  socketio.run(app, host='0.0.0.0', port=8081, debug=True)
+  socketio.run(app, host='0.0.0.0', port=8081, debug=True, allow_unsafe_werkzeug=True)
   ```
 
 ### 5. 数据库连接失败
@@ -426,7 +422,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 # 运行开发服务器
-python run.py
+python app.py
 ```
 
 ---
