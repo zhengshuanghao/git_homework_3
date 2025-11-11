@@ -100,9 +100,21 @@ class DeepSeekService:
             # 非 SSL 类问题，直接抛出 SDK 的错误
             raise Exception(f"DeepSeek API调用失败: {err_msg}")
     
-    def generate_travel_plan(self, user_input):
-        """生成旅行计划"""
-        system_prompt = """你是一个专业的旅行规划师。根据用户的输入，生成详细的旅行计划。
+    def generate_travel_plan(self, user_input, user_preferences=None):
+        """生成旅行计划
+        
+        Args:
+            user_input: 用户输入的旅行需求
+            user_preferences: 用户偏好设置（可选）
+        """
+        system_prompt = """你是一个专业的旅行规划师。根据用户的输入和偏好设置，生成详细的旅行计划。
+
+**重要要求：**
+1. 住宿推荐必须具体，包括酒店名称、地址、价格区间、特色
+2. 餐厅推荐必须具体，包括餐厅名称、招牌菜、人均消费、地址
+3. 根据用户预算推荐合适档次的酒店和餐厅
+4. 考虑用户的偏好设置（如有）
+
 请以JSON格式返回，包含以下字段：
 {
     "destination": "目的地",
@@ -120,6 +132,13 @@ class DeepSeekService:
                     "type": "类型（交通/住宿/景点/餐厅）",
                     "name": "名称",
                     "description": "描述",
+                    "details": {
+                        "address": "具体地址（住宿和餐厅必填）",
+                        "price_range": "价格区间",
+                        "rating": "评分",
+                        "highlights": ["特色1", "特色2"],
+                        "contact": "联系方式（可选）"
+                    },
                     "location": {
                         "name": "地点名称",
                         "lng": 经度,
@@ -132,15 +151,44 @@ class DeepSeekService:
             "total_cost": 当日总费用
         }
     ],
+    "accommodation_summary": [
+        {
+            "hotel_name": "酒店名称",
+            "nights": 入住晚数,
+            "total_cost": 总费用,
+            "address": "地址",
+            "features": ["特色1", "特色2"]
+        }
+    ],
+    "restaurant_recommendations": [
+        {
+            "name": "餐厅名称",
+            "cuisine": "菜系",
+            "signature_dishes": ["招牌菜1", "招牌菜2"],
+            "avg_cost": 人均消费,
+            "address": "地址"
+        }
+    ],
     "total_budget": 总预算,
     "tips": ["建议1", "建议2"]
 }
 
 请确保返回的是有效的JSON格式，不要包含其他文字。"""
         
+        # 构建完整的用户输入
+        full_input = user_input
+        
+        # 如果有用户偏好，添加到输入中
+        if user_preferences:
+            from services.preference_service import PreferenceService
+            pref_service = PreferenceService()
+            pref_text = pref_service.format_preferences_for_prompt(user_preferences)
+            if pref_text:
+                full_input = f"{user_input}\n\n{pref_text}"
+        
         messages = [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_input}
+            {"role": "user", "content": full_input}
         ]
         
         try:

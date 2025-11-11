@@ -12,6 +12,8 @@ from services.speech_recognition_service import SpeechRecognitionSyncWrapper
 from services.deepseek_service import DeepSeekService
 from services.supabase_service import SupabaseService
 from services.amap_service import AmapService
+from services.preference_service import PreferenceService
+from services.expense_service import ExpenseService
 import base64
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -29,6 +31,8 @@ speech_recognition_service = SpeechRecognitionSyncWrapper(
 deepseek_service = DeepSeekService()
 supabase_service = SupabaseService()
 amap_service = AmapService()
+preference_service = PreferenceService()
+expense_service = ExpenseService()
 
 @app.route('/')
 def landing():
@@ -98,8 +102,13 @@ def create_travel_plan():
         user_input = data.get('input', '')
         user_id = data.get('user_id')
         
-        # 使用DeepSeek生成旅行计划
-        plan = deepseek_service.generate_travel_plan(user_input)
+        # 获取用户偏好设置
+        user_preferences = None
+        if user_id and supabase_service.is_configured():
+            user_preferences = preference_service.get_user_preferences(user_id)
+        
+        # 使用DeepSeek生成旅行计划（结合用户偏好）
+        plan = deepseek_service.generate_travel_plan(user_input, user_preferences)
         
         # 保存到Supabase
         if user_id and supabase_service.is_configured():
@@ -141,20 +150,20 @@ def get_travel_plan(plan_id):
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route('/api/travel/expense', methods=['POST'])
-def add_expense():
-    """添加费用记录"""
+@app.route('/api/travel/plan/<plan_id>', methods=['DELETE'])
+def delete_travel_plan(plan_id):
+    """删除旅行计划"""
     try:
-        data = request.json
-        user_id = data.get('user_id')
-        plan_id = data.get('plan_id')
-        expense = data.get('expense')
+        user_id = request.args.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'message': '缺少user_id参数'}), 400
         
         if not supabase_service.is_configured():
             return jsonify({'success': False, 'message': 'Supabase未配置'}), 400
         
-        expense_id = supabase_service.add_expense(user_id, plan_id, expense)
-        return jsonify({'success': True, 'expense_id': expense_id})
+        # 删除计划
+        supabase_service.client.table('travel_plans').delete().eq('id', plan_id).eq('user_id', user_id).execute()
+        return jsonify({'success': True, 'message': '计划已删除'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -270,6 +279,136 @@ def handle_stop_recording():
     except Exception as e:
         print(f"[X] 停止语音识别失败: {str(e)}")
         emit('error', {'message': f'停止语音识别失败: {str(e)}'})
+
+# ==================== 用户偏好设置API ====================
+
+@app.route('/api/preferences', methods=['GET'])
+def get_preferences():
+    """获取用户偏好设置"""
+    try:
+        user_id = request.args.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'message': '缺少user_id参数'}), 400
+        
+        if not supabase_service.is_configured():
+            return jsonify({'success': False, 'message': 'Supabase未配置'}), 400
+        
+        preferences = preference_service.get_user_preferences(user_id)
+        return jsonify({'success': True, 'preferences': preferences})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/preferences', methods=['POST'])
+def save_preferences():
+    """保存用户偏好设置"""
+    try:
+        data = request.json
+        user_id = data.get('user_id')
+        preferences = data.get('preferences', {})
+        
+        if not user_id:
+            return jsonify({'success': False, 'message': '缺少user_id参数'}), 400
+        
+        if not supabase_service.is_configured():
+            return jsonify({'success': False, 'message': 'Supabase未配置'}), 400
+        
+        result = preference_service.save_user_preferences(user_id, preferences)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+# ==================== 费用记录API ====================
+
+@app.route('/api/expenses', methods=['GET'])
+def get_expenses():
+    """获取费用记录"""
+    try:
+        user_id = request.args.get('user_id')
+        plan_id = request.args.get('plan_id')
+        
+        if not user_id:
+            return jsonify({'success': False, 'message': '缺少user_id参数'}), 400
+        
+        if not supabase_service.is_configured():
+            return jsonify({'success': False, 'message': 'Supabase未配置'}), 400
+        
+        expenses = expense_service.get_user_expenses(user_id, plan_id)
+        return jsonify({'success': True, 'expenses': expenses})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/expenses', methods=['POST'])
+def add_expense():
+    """添加费用记录"""
+    try:
+        data = request.json
+        user_id = data.get('user_id')
+        expense_data = data.get('expense', {})
+        
+        if not user_id:
+            return jsonify({'success': False, 'message': '缺少user_id参数'}), 400
+        
+        if not supabase_service.is_configured():
+            return jsonify({'success': False, 'message': 'Supabase未配置'}), 400
+        
+        result = expense_service.add_expense(user_id, expense_data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/expenses/<expense_id>', methods=['PUT'])
+def update_expense(expense_id):
+    """更新费用记录"""
+    try:
+        data = request.json
+        user_id = data.get('user_id')
+        expense_data = data.get('expense', {})
+        
+        if not user_id:
+            return jsonify({'success': False, 'message': '缺少user_id参数'}), 400
+        
+        if not supabase_service.is_configured():
+            return jsonify({'success': False, 'message': 'Supabase未配置'}), 400
+        
+        result = expense_service.update_expense(expense_id, user_id, expense_data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/expenses/<expense_id>', methods=['DELETE'])
+def delete_expense(expense_id):
+    """删除费用记录"""
+    try:
+        user_id = request.args.get('user_id')
+        
+        if not user_id:
+            return jsonify({'success': False, 'message': '缺少user_id参数'}), 400
+        
+        if not supabase_service.is_configured():
+            return jsonify({'success': False, 'message': 'Supabase未配置'}), 400
+        
+        result = expense_service.delete_expense(expense_id, user_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/expenses/summary', methods=['GET'])
+def get_expense_summary():
+    """获取费用汇总"""
+    try:
+        user_id = request.args.get('user_id')
+        plan_id = request.args.get('plan_id')
+        
+        if not user_id:
+            return jsonify({'success': False, 'message': '缺少user_id参数'}), 400
+        
+        if not supabase_service.is_configured():
+            return jsonify({'success': False, 'message': 'Supabase未配置'}), 400
+        
+        summary = expense_service.get_expense_summary(user_id, plan_id)
+        return jsonify({'success': True, 'summary': summary})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 if __name__ == '__main__':
     # 从文件加载配置

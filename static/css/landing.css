@@ -107,14 +107,14 @@ body {
 
 /* 英雄区域 */
 .hero {
-    padding: 6rem 2rem;
+    padding: 4rem 2rem;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 4rem;
-    min-height: 600px;
+    gap: 3rem;
+    min-height: 450px;
     position: relative;
     overflow: hidden;
 }
@@ -138,17 +138,17 @@ body {
 }
 
 .hero-title {
-    font-size: 3rem;
+    font-size: 2.5rem;
     font-weight: 800;
     line-height: 1.2;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .hero-subtitle {
-    font-size: 1.25rem;
-    line-height: 1.8;
-    margin-bottom: 2rem;
+    font-size: 1.125rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
     opacity: 0.95;
 }
 
@@ -227,15 +227,15 @@ body {
 
 /* 功能介绍 */
 .features {
-    padding: 6rem 2rem;
+    padding: 4rem 2rem;
     background: var(--bg-white);
 }
 
 .section-title {
     text-align: center;
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: 700;
-    margin-bottom: 4rem;
+    margin-bottom: 3rem;
     color: var(--text-dark);
 }
 
@@ -279,7 +279,7 @@ body {
 
 /* 使用步骤 */
 .steps {
-    padding: 6rem 2rem;
+    padding: 4rem 2rem;
     background: var(--bg-light);
 }
 
@@ -335,21 +335,21 @@ body {
 
 /* CTA区域 */
 .cta {
-    padding: 6rem 2rem;
+    padding: 4rem 2rem;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     text-align: center;
 }
 
 .cta-title {
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: 700;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .cta-subtitle {
-    font-size: 1.25rem;
-    margin-bottom: 2rem;
+    font-size: 1.125rem;
+    margin-bottom: 1.5rem;
     opacity: 0.95;
 }
 

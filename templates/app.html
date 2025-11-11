@@ -13,6 +13,8 @@
         <div class="nav-container">
             <h1 class="logo">✈️ AI旅行规划师</h1>
             <div class="nav-buttons">
+                <button id="preferencesBtn" class="btn-nav">⚙️ 偏好设置</button>
+                <button id="expensesBtn" class="btn-nav">💰 费用记录</button>
                 <div id="userInfo" class="user-info">
                     <span id="userEmail" class="user-email"></span>
                     <button id="logoutBtn" class="btn-logout">退出登录</button>
@@ -89,8 +91,183 @@
         <p>正在生成旅行计划...</p>
     </div>
 
+    <!-- 偏好设置模态框 -->
+    <div id="preferencesModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>🎯 旅游偏好设置</h2>
+                <button class="close-btn" onclick="closePreferencesModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="preferencesForm">
+                    <div class="pref-section">
+                        <h3>旅行风格</h3>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="travel_style" value="休闲"> 休闲</label>
+                            <label><input type="checkbox" name="travel_style" value="探险"> 探险</label>
+                            <label><input type="checkbox" name="travel_style" value="文化"> 文化</label>
+                            <label><input type="checkbox" name="travel_style" value="美食"> 美食</label>
+                            <label><input type="checkbox" name="travel_style" value="购物"> 购物</label>
+                            <label><input type="checkbox" name="travel_style" value="自然"> 自然</label>
+                        </div>
+                    </div>
+
+                    <div class="pref-section">
+                        <h3>住宿偏好</h3>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="accommodation_type" value="经济型"> 经济型</label>
+                            <label><input type="checkbox" name="accommodation_type" value="舒适型"> 舒适型</label>
+                            <label><input type="checkbox" name="accommodation_type" value="豪华型"> 豪华型</label>
+                            <label><input type="checkbox" name="accommodation_type" value="民宿"> 民宿</label>
+                            <label><input type="checkbox" name="accommodation_type" value="酒店"> 酒店</label>
+                            <label><input type="checkbox" name="accommodation_type" value="青旅"> 青旅</label>
+                        </div>
+                    </div>
+
+                    <div class="pref-section">
+                        <h3>饮食偏好</h3>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="food_preference" value="中餐"> 中餐</label>
+                            <label><input type="checkbox" name="food_preference" value="西餐"> 西餐</label>
+                            <label><input type="checkbox" name="food_preference" value="日韩料理"> 日韩料理</label>
+                            <label><input type="checkbox" name="food_preference" value="东南亚菜"> 东南亚菜</label>
+                            <label><input type="checkbox" name="food_preference" value="素食"> 素食</label>
+                            <label><input type="checkbox" name="food_preference" value="清真"> 清真</label>
+                        </div>
+                    </div>
+
+                    <div class="pref-section">
+                        <h3>交通偏好</h3>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="transportation_preference" value="公共交通"> 公共交通</label>
+                            <label><input type="checkbox" name="transportation_preference" value="出租车"> 出租车</label>
+                            <label><input type="checkbox" name="transportation_preference" value="租车"> 租车</label>
+                            <label><input type="checkbox" name="transportation_preference" value="步行"> 步行</label>
+                            <label><input type="checkbox" name="transportation_preference" value="自行车"> 自行车</label>
+                        </div>
+                    </div>
+
+                    <div class="pref-section">
+                        <h3>活动偏好</h3>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="activity_preference" value="博物馆"> 博物馆</label>
+                            <label><input type="checkbox" name="activity_preference" value="景点"> 景点</label>
+                            <label><input type="checkbox" name="activity_preference" value="户外"> 户外</label>
+                            <label><input type="checkbox" name="activity_preference" value="购物"> 购物</label>
+                            <label><input type="checkbox" name="activity_preference" value="美食探店"> 美食探店</label>
+                            <label><input type="checkbox" name="activity_preference" value="夜生活"> 夜生活</label>
+                        </div>
+                    </div>
+
+                    <div class="pref-section">
+                        <h3>预算等级</h3>
+                        <div class="radio-group">
+                            <label><input type="radio" name="budget_level" value="经济"> 经济</label>
+                            <label><input type="radio" name="budget_level" value="中等"> 中等</label>
+                            <label><input type="radio" name="budget_level" value="高端"> 高端</label>
+                        </div>
+                    </div>
+
+                    <div class="pref-section">
+                        <h3>行程节奏</h3>
+                        <div class="radio-group">
+                            <label><input type="radio" name="pace" value="轻松"> 轻松</label>
+                            <label><input type="radio" name="pace" value="适中"> 适中</label>
+                            <label><input type="radio" name="pace" value="紧凑"> 紧凑</label>
+                        </div>
+                    </div>
+
+                    <div class="pref-section">
+                        <h3>特殊需求</h3>
+                        <textarea name="special_requirements" rows="3" placeholder="例如：无障碍设施、带小孩、老人同行等"></textarea>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="submit" class="btn-primary">保存偏好</button>
+                        <button type="button" class="btn-secondary" onclick="closePreferencesModal()">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 费用记录模态框 -->
+    <div id="expensesModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>💰 费用记录</h2>
+                <button class="close-btn" onclick="closeExpensesModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- 费用汇总 -->
+                <div class="expense-summary">
+                    <h3>费用汇总</h3>
+                    <div class="summary-cards">
+                        <div class="summary-card">
+                            <div class="summary-label">总支出</div>
+                            <div class="summary-value" id="totalExpense">¥0</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-label">记录数</div>
+                            <div class="summary-value" id="expenseCount">0</div>
+                        </div>
+                    </div>
+                    <div id="expenseByCategory" class="category-breakdown"></div>
+                </div>
+
+                <!-- 添加费用 -->
+                <div class="add-expense-section">
+                    <h3>添加费用</h3>
+                    <form id="addExpenseForm">
+                        <div class="form-group">
+                            <label>关联旅行计划（可选）</label>
+                            <select name="plan_id" id="expensePlanSelect">
+                                <option value="">不关联具体计划</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>金额</label>
+                                <input type="number" name="amount" step="0.01" required placeholder="0.00">
+                            </div>
+                            <div class="form-group">
+                                <label>类别</label>
+                                <select name="category" required>
+                                    <option value="">选择类别</option>
+                                    <option value="交通">交通</option>
+                                    <option value="住宿">住宿</option>
+                                    <option value="餐饮">餐饮</option>
+                                    <option value="景点">景点</option>
+                                    <option value="购物">购物</option>
+                                    <option value="其他">其他</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>日期</label>
+                                <input type="date" name="date" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>描述</label>
+                            <input type="text" name="description" placeholder="费用说明">
+                        </div>
+                        <button type="submit" class="btn-primary">添加</button>
+                    </form>
+                </div>
+
+                <!-- 费用列表 -->
+                <div class="expense-list-section">
+                    <h3>费用列表</h3>
+                    <div id="expenseList" class="expense-list">
+                        <p class="empty-message">暂无费用记录</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
         <script src="{{ url_for('static', filename='js/audio-recorder.js') }}?v=5"></script>
-        <script src="{{ url_for('static', filename='js/app.js') }}?v=12"></script>
+        <script src="{{ url_for('static', filename='js/app.js') }}?v=13"></script>
 </body>
 </html>
 

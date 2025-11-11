@@ -283,8 +283,16 @@ body {
     padding: 1rem;
     background: #f5f5f5;
     border-radius: 8px;
-    cursor: pointer;
     transition: all 0.3s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.plan-item-content {
+    flex: 1;
+    cursor: pointer;
 }
 
 .plan-item:hover {
@@ -300,6 +308,22 @@ body {
 .plan-item-meta {
     font-size: 0.85rem;
     color: #666;
+}
+
+.btn-delete-plan {
+    padding: 0.5rem;
+    border: none;
+    background: transparent;
+    color: #dc2626;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 1.2rem;
+    transition: all 0.3s;
+}
+
+.btn-delete-plan:hover {
+    background: rgba(220, 38, 38, 0.1);
+    transform: scale(1.1);
 }
 
 .empty-message {
@@ -526,6 +550,287 @@ body {
     to {
         transform: rotate(360deg);
     }
+}
+
+/* 导航按钮样式 */
+.btn-nav {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    color: #667eea;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-nav:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+/* 模态框大尺寸 */
+.modal-large {
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* 偏好设置样式 */
+.pref-section {
+    margin-bottom: 2rem;
+}
+
+.pref-section h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: #333;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 0.5rem;
+}
+
+.checkbox-group, .radio-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.75rem;
+}
+
+.checkbox-group label, .radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: background 0.3s;
+}
+
+.checkbox-group label:hover, .radio-group label:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.checkbox-group input[type="checkbox"],
+.radio-group input[type="radio"] {
+    cursor: pointer;
+}
+
+.pref-section textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e0e0e0;
+}
+
+/* 费用记录样式 */
+.expense-summary {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    color: white;
+}
+
+.expense-summary h3 {
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.summary-card {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.summary-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+}
+
+.summary-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.category-breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.category-item {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.75rem;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.category-name {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    margin-bottom: 0.25rem;
+}
+
+.category-amount {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.add-expense-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.add-expense-section h3 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #555;
+}
+
+.form-group input,
+.form-group select {
+    padding: 0.75rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.expense-list-section {
+    margin-top: 2rem;
+}
+
+.expense-list-section h3 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.expense-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.expense-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    transition: all 0.3s;
+}
+
+.expense-item:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.expense-info {
+    flex: 1;
+}
+
+.expense-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.expense-category {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: #667eea;
+    color: white;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.expense-amount {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.expense-description {
+    color: #666;
+    margin-bottom: 0.25rem;
+}
+
+.expense-date {
+    font-size: 0.85rem;
+    color: #999;
+}
+
+.expense-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-icon {
+    padding: 0.5rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s;
+    font-size: 1.2rem;
+}
+
+.btn-icon:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.btn-delete:hover {
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
 }
 
 /* 响应式设计 */

@@ -244,6 +244,14 @@ function initEventListeners() {
     // 退出登录
     document.getElementById('logoutBtn').addEventListener('click', logout);
     
+    // 偏好设置和费用记录
+    document.getElementById('preferencesBtn').addEventListener('click', openPreferencesModal);
+    document.getElementById('expensesBtn').addEventListener('click', openExpensesModal);
+    
+    // 表单提交
+    document.getElementById('preferencesForm').addEventListener('submit', savePreferences);
+    document.getElementById('addExpenseForm').addEventListener('submit', addExpense);
+    
     // 关闭计划详情
     document.getElementById('closePlanBtn').addEventListener('click', () => {
         document.getElementById('planDetails').style.display = 'none';
@@ -555,9 +563,12 @@ async function loadUserPlans() {
                 plansList.innerHTML = data.plans.map(plan => {
                     const planData = typeof plan.plan_data === 'string' ? JSON.parse(plan.plan_data) : plan.plan_data;
                     return `
-                        <div class="plan-item" onclick="loadPlan(${plan.id})">
-                            <div class="plan-item-title">${planData.destination || '未知目的地'}</div>
-                            <div class="plan-item-meta">${plan.duration || ''}天 | ¥${plan.budget || 0}</div>
+                        <div class="plan-item">
+                            <div class="plan-item-content" onclick="loadPlan(${plan.id})">
+                                <div class="plan-item-title">${planData.destination || '未知目的地'}</div>
+                                <div class="plan-item-meta">${plan.duration || ''}天 | ¥${plan.budget || 0}</div>
+                            </div>
+                            <button class="btn-delete-plan" onclick="event.stopPropagation(); deletePlan(${plan.id})" title="删除计划">🗑️</button>
                         </div>
                     `;
                 }).join('');
@@ -595,7 +606,329 @@ function hideLoading() {
     document.getElementById('loadingOverlay').style.display = 'none';
 }
 
+// ==================== 偏好设置功能 ====================
+
+function openPreferencesModal() {
+    const modal = document.getElementById('preferencesModal');
+    modal.classList.add('active');
+    loadUserPreferences();
+}
+
+function closePreferencesModal() {
+    const modal = document.getElementById('preferencesModal');
+    modal.classList.remove('active');
+}
+
+async function loadUserPreferences() {
+    if (!currentUser || !currentUser.id) return;
+    
+    try {
+        const response = await fetch(`/api/preferences?user_id=${currentUser.id}`);
+        const data = await response.json();
+        
+        if (data.success && data.preferences) {
+            const prefs = data.preferences;
+            const form = document.getElementById('preferencesForm');
+            
+            // 填充复选框
+            ['travel_style', 'accommodation_type', 'food_preference', 'transportation_preference', 'activity_preference'].forEach(field => {
+                if (prefs[field] && Array.isArray(prefs[field])) {
+                    prefs[field].forEach(value => {
+                        const checkbox = form.querySelector(`input[name="${field}"][value="${value}"]`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                }
+            });
+            
+            // 填充单选框
+            if (prefs.budget_level) {
+                const radio = form.querySelector(`input[name="budget_level"][value="${prefs.budget_level}"]`);
+                if (radio) radio.checked = true;
+            }
+            
+            if (prefs.pace) {
+                const radio = form.querySelector(`input[name="pace"][value="${prefs.pace}"]`);
+                if (radio) radio.checked = true;
+            }
+            
+            // 填充文本域
+            if (prefs.special_requirements) {
+                form.querySelector('textarea[name="special_requirements"]').value = prefs.special_requirements;
+            }
+        }
+    } catch (error) {
+        console.error('加载偏好设置失败:', error);
+    }
+}
+
+async function savePreferences(e) {
+    e.preventDefault();
+    
+    if (!currentUser || !currentUser.id) {
+        alert('请先登录');
+        return;
+    }
+    
+    const form = e.target;
+    const formData = new FormData(form);
+    
+    // 构建偏好数据
+    const preferences = {
+        travel_style: formData.getAll('travel_style'),
+        accommodation_type: formData.getAll('accommodation_type'),
+        food_preference: formData.getAll('food_preference'),
+        transportation_preference: formData.getAll('transportation_preference'),
+        activity_preference: formData.getAll('activity_preference'),
+        budget_level: formData.get('budget_level') || '',
+        pace: formData.get('pace') || '',
+        special_requirements: formData.get('special_requirements') || ''
+    };
+    
+    try {
+        const response = await fetch('/api/preferences', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                user_id: currentUser.id,
+                preferences: preferences
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('偏好设置保存成功！');
+            closePreferencesModal();
+        } else {
+            alert('保存失败：' + data.message);
+        }
+    } catch (error) {
+        console.error('保存偏好设置失败:', error);
+        alert('保存失败，请稍后重试');
+    }
+}
+
+// ==================== 费用记录功能 ====================
+
+async function openExpensesModal() {
+    const modal = document.getElementById('expensesModal');
+    modal.classList.add('active');
+    await loadUserPlansForExpense(); // 加载旅行计划列表
+    await loadExpenses();
+    await loadExpenseSummary();
+}
+
+async function loadUserPlansForExpense() {
+    if (!currentUser || !currentUser.id) return;
+    
+    try {
+        const response = await fetch(`/api/travel/plans?user_id=${currentUser.id}`);
+        const data = await response.json();
+        
+        if (data.success && data.plans) {
+            const select = document.getElementById('expensePlanSelect');
+            select.innerHTML = '<option value="">不关联具体计划</option>';
+            
+            data.plans.forEach(plan => {
+                const option = document.createElement('option');
+                option.value = plan.id;
+                option.textContent = `${plan.destination || '未知目的地'} - ${plan.duration || ''}`;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('加载旅行计划列表失败:', error);
+    }
+}
+
+function closeExpensesModal() {
+    const modal = document.getElementById('expensesModal');
+    modal.classList.remove('active');
+}
+
+async function loadExpenses() {
+    if (!currentUser || !currentUser.id) return;
+    
+    try {
+        const response = await fetch(`/api/expenses?user_id=${currentUser.id}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            displayExpenses(data.expenses);
+        }
+    } catch (error) {
+        console.error('加载费用记录失败:', error);
+    }
+}
+
+function displayExpenses(expenses) {
+    const listEl = document.getElementById('expenseList');
+    
+    if (!expenses || expenses.length === 0) {
+        listEl.innerHTML = '<p class="empty-message">暂无费用记录</p>';
+        return;
+    }
+    
+    listEl.innerHTML = expenses.map(exp => `
+        <div class="expense-item">
+            <div class="expense-info">
+                <div class="expense-header">
+                    <span class="expense-category">${exp.category || '其他'}</span>
+                    <span class="expense-amount">¥${parseFloat(exp.amount).toFixed(2)}</span>
+                </div>
+                <div class="expense-description">${exp.description || '无描述'}</div>
+                <div class="expense-date">${new Date(exp.date).toLocaleDateString('zh-CN')}</div>
+            </div>
+            <div class="expense-actions">
+                <button class="btn-icon btn-delete" onclick="deleteExpense(${exp.id})">🗑️</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function loadExpenseSummary() {
+    if (!currentUser || !currentUser.id) return;
+    
+    try {
+        const response = await fetch(`/api/expenses/summary?user_id=${currentUser.id}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const summary = data.summary;
+            
+            // 更新总计
+            document.getElementById('totalExpense').textContent = `¥${summary.total.toFixed(2)}`;
+            document.getElementById('expenseCount').textContent = summary.count;
+            
+            // 更新分类统计
+            const categoryEl = document.getElementById('expenseByCategory');
+            if (summary.by_category && Object.keys(summary.by_category).length > 0) {
+                categoryEl.innerHTML = Object.entries(summary.by_category).map(([category, amount]) => `
+                    <div class="category-item">
+                        <div class="category-name">${category}</div>
+                        <div class="category-amount">¥${amount.toFixed(2)}</div>
+                    </div>
+                `).join('');
+            } else {
+                categoryEl.innerHTML = '';
+            }
+        }
+    } catch (error) {
+        console.error('加载费用汇总失败:', error);
+    }
+}
+
+async function addExpense(e) {
+    e.preventDefault();
+    
+    if (!currentUser || !currentUser.id) {
+        alert('请先登录');
+        return;
+    }
+    
+    const form = e.target;
+    const formData = new FormData(form);
+    
+    const planId = formData.get('plan_id');
+    
+    const expense = {
+        plan_id: planId ? parseInt(planId) : null,
+        amount: parseFloat(formData.get('amount')),
+        category: formData.get('category'),
+        date: formData.get('date'),
+        description: formData.get('description') || ''
+    };
+    
+    try {
+        const response = await fetch('/api/expenses', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                user_id: currentUser.id,
+                expense: expense
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('费用记录添加成功！');
+            form.reset();
+            await loadExpenses();
+            await loadExpenseSummary();
+        } else {
+            alert('添加失败：' + data.message);
+        }
+    } catch (error) {
+        console.error('添加费用记录失败:', error);
+        alert('添加失败，请稍后重试');
+    }
+}
+
+async function deleteExpense(expenseId) {
+    if (!confirm('确定要删除这条费用记录吗？')) return;
+    
+    if (!currentUser || !currentUser.id) {
+        alert('请先登录');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/expenses/${expenseId}?user_id=${currentUser.id}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            await loadExpenses();
+            await loadExpenseSummary();
+        } else {
+            alert('删除失败：' + data.message);
+        }
+    } catch (error) {
+        console.error('删除费用记录失败:', error);
+        alert('删除失败，请稍后重试');
+    }
+}
+
+// 删除旅行计划
+async function deletePlan(planId) {
+    if (!confirm('确定要删除这个旅行计划吗？相关的费用记录不会被删除。')) return;
+    
+    if (!currentUser || !currentUser.id) {
+        alert('请先登录');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/travel/plan/${planId}?user_id=${currentUser.id}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('计划已删除');
+            await loadUserPlans(); // 重新加载计划列表
+        } else {
+            alert('删除失败：' + data.message);
+        }
+    } catch (error) {
+        console.error('删除计划失败:', error);
+        alert('删除失败，请稍后重试');
+    }
+}
+
 // 全局函数（供HTML调用）
 window.loadPlan = loadPlan;
+window.deletePlan = deletePlan;
 window.closeModal = closeModal;
+window.closePreferencesModal = closePreferencesModal;
+window.closeExpensesModal = closeExpensesModal;
+window.deleteExpense = deleteExpense;
 
