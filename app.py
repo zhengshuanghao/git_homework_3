@@ -423,5 +423,6 @@ if __name__ == '__main__':
     print("\n正在启动服务器...\n")
     
     # 启动应用
-    socketio.run(app, debug=True, host='0.0.0.0', port=8080)
+    # allow_unsafe_werkzeug=True: 允许使用Werkzeug开发服务器（仅用于开发环境）
+    socketio.run(app, debug=True, host='0.0.0.0', port=8080, allow_unsafe_werkzeug=True)
 
