@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  ai-travel-planner:
+    image: registry.cn-hangzhou.aliyuncs.com/ai-travel-planner/ai-travel-planner:latest
+    container_name: ai-travel-planner
+    ports:
+      - "8080:8080"
+    environment:
+      # 火山方舟语音识别
+      - SPEECH_APP_ID=${SPEECH_APP_ID}
+      - SPEECH_ACCESS_KEY=${SPEECH_ACCESS_KEY}
+      - SPEECH_SECRET_KEY=${SPEECH_SECRET_KEY}
+      - SPEECH_MODEL_ID=${SPEECH_MODEL_ID}
+      
+      # 高德地图
+      - AMAP_API_KEY=${AMAP_API_KEY}
+      - AMAP_API_SECRET=${AMAP_API_SECRET}
+      
+      # 火山方舟 DeepSeek
+      - ARK_API_KEY=${ARK_API_KEY}
+      - ARK_BASE_URL=${ARK_BASE_URL:-https://ark.cn-beijing.volces.com/api/v3}
+      - DEEPSEEK_MODEL=${DEEPSEEK_MODEL}
+      
+      # Supabase
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      
+      # Flask
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-change-me-in-production}
+      - FLASK_ENV=${FLASK_ENV:-production}
+    
+    # 可选：挂载.env文件
+    # env_file:
+    #   - .env
+    
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

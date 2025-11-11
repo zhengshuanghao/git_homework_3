@@ -63,13 +63,53 @@
 
 ## 🚀 快速开始
 
-### 1️⃣ 环境要求
+### 🐳 方式一：Docker部署（推荐）
+
+**最简单的方式，一键启动！**
+
+```bash
+# 1. 拉取镜像
+docker pull registry.cn-hangzhou.aliyuncs.com/ai-travel-planner/ai-travel-planner:latest
+
+# 2. 运行容器（需要配置环境变量）
+docker run -d \
+  --name ai-travel-planner \
+  -p 8080:8080 \
+  -e ARK_API_KEY=your_key \
+  -e DEEPSEEK_MODEL=your_model \
+  -e SUPABASE_URL=your_url \
+  -e SUPABASE_KEY=your_key \
+  registry.cn-hangzhou.aliyuncs.com/ai-travel-planner/ai-travel-planner:latest
+
+# 3. 访问应用
+# 打开浏览器访问 http://localhost:8080
+```
+
+**或使用docker-compose：**
+
+```bash
+# 1. 下载docker-compose.yml和.env.example
+# 2. 配置.env文件
+cp .env.example .env
+# 编辑.env文件填入API密钥
+
+# 3. 启动
+docker-compose up -d
+```
+
+📖 详细说明请查看：[Docker部署指南](DOCKER_DEPLOYMENT.md)
+
+---
+
+### 💻 方式二：本地部署
+
+#### 1️⃣ 环境要求
 
 - Python 3.8+
 - pip 包管理器
 - 现代浏览器（Chrome/Firefox/Edge）
 
-### 2️⃣ 安装依赖
+#### 2️⃣ 安装依赖
 
 ```bash
 # 克隆或下载项目后，进入项目目录

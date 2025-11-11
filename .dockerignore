@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# 虚拟环境
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# 环境变量（不要打包到镜像中）
+.env
+
+# 日志
+*.log
+
+# 临时文件
+*.tmp
+*.bak
+
+# 文档
+*.md
+!README.md
+
+# 测试文件
+test_*.py
+*_test.py
+
+# 其他
+.DS_Store
+Thumbs.db
