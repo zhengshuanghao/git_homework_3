@@ -13,6 +13,7 @@
         <div class="nav-container">
             <h1 class="logo">✈️ AI旅行规划师</h1>
             <div class="nav-buttons">
+                <button id="settingsBtn" class="btn-nav">🔧 API设置</button>
                 <button id="preferencesBtn" class="btn-nav">⚙️ 偏好设置</button>
                 <button id="expensesBtn" class="btn-nav">💰 费用记录</button>
                 <div id="userInfo" class="user-info">
@@ -266,8 +267,101 @@
         </div>
     </div>
 
+    <!-- API设置模态框 -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>🔧 API密钥设置</h2>
+                <span class="close" onclick="closeSettingsModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p class="settings-tip">💡 提示：配置API密钥后，无需重启应用即可生效。所有密钥将保存到 .env 文件中。</p>
+                
+                <form id="settingsForm">
+                    <!-- 火山方舟语音识别 -->
+                    <div class="settings-section">
+                        <h3>🎤 火山方舟语音识别</h3>
+                        <div class="form-group">
+                            <label>APP ID</label>
+                            <input type="text" name="speech_app_id" placeholder="例如: 1356755714">
+                        </div>
+                        <div class="form-group">
+                            <label>Access Key</label>
+                            <input type="text" name="speech_access_key" placeholder="例如: oPxND_k8BQJveNLg...">
+                        </div>
+                        <div class="form-group">
+                            <label>Secret Key</label>
+                            <input type="password" name="speech_secret_key" placeholder="例如: Aj8WnzaLDOeWTiIcF9zC...">
+                        </div>
+                        <div class="form-group">
+                            <label>Model ID</label>
+                            <input type="text" name="speech_model_id" placeholder="例如: Speech_Recognition_Seed_streaming...">
+                        </div>
+                    </div>
+
+                    <!-- 高德地图 -->
+                    <div class="settings-section">
+                        <h3>🗺️ 高德地图API</h3>
+                        <div class="form-group">
+                            <label>API Key</label>
+                            <input type="text" name="amap_api_key" placeholder="例如: 62b0a02ed7213d7753d65007051c0c6f">
+                        </div>
+                        <div class="form-group">
+                            <label>API Secret（可选）</label>
+                            <input type="text" name="amap_api_secret" placeholder="例如: 66a262e19c64cdc1109b2c70dd89fee0">
+                        </div>
+                    </div>
+
+                    <!-- 火山方舟 DeepSeek -->
+                    <div class="settings-section">
+                        <h3>🤖 火山方舟 DeepSeek LLM</h3>
+                        <div class="form-group">
+                            <label>API Key</label>
+                            <input type="text" name="ark_api_key" placeholder="例如: f93d8bf5-f42b-4f2d-9268-215593175f37">
+                        </div>
+                        <div class="form-group">
+                            <label>Base URL</label>
+                            <input type="text" name="ark_base_url" value="https://ark.cn-beijing.volces.com/api/v3">
+                        </div>
+                        <div class="form-group">
+                            <label>Model/Endpoint ID</label>
+                            <input type="text" name="deepseek_model" placeholder="例如: ep-20251109191548-z4vdn">
+                        </div>
+                    </div>
+
+                    <!-- Supabase -->
+                    <div class="settings-section">
+                        <h3>🗄️ Supabase数据库</h3>
+                        <div class="form-group">
+                            <label>Supabase URL</label>
+                            <input type="text" name="supabase_url" placeholder="例如: https://xxx.supabase.co">
+                        </div>
+                        <div class="form-group">
+                            <label>Supabase Key (Anon Key)</label>
+                            <input type="password" name="supabase_key" placeholder="例如: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+                        </div>
+                    </div>
+
+                    <!-- Flask -->
+                    <div class="settings-section">
+                        <h3>🔐 Flask配置</h3>
+                        <div class="form-group">
+                            <label>Secret Key</label>
+                            <input type="password" name="flask_secret_key" placeholder="用于会话加密的密钥">
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="closeSettingsModal()">取消</button>
+                        <button type="submit" class="btn-primary">💾 保存配置</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
         <script src="{{ url_for('static', filename='js/audio-recorder.js') }}?v=5"></script>
-        <script src="{{ url_for('static', filename='js/app.js') }}?v=13"></script>
+        <script src="{{ url_for('static', filename='js/app.js') }}?v=14"></script>
 </body>
 </html>
 

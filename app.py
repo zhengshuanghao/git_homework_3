@@ -94,6 +94,109 @@ def update_config():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
+@app.route('/api/config/save', methods=['POST'])
+def save_config_to_env():
+    """保存配置到.env文件"""
+    try:
+        config_data = request.json
+        
+        # 读取现有的.env文件内容
+        env_path = os.path.join(os.path.dirname(__file__), '.env')
+        env_lines = {}
+        
+        # 如果.env文件存在，先读取现有内容
+        if os.path.exists(env_path):
+            with open(env_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        key, value = line.split('=', 1)
+                        env_lines[key.strip()] = value.strip()
+        
+        # 映射前端字段名到环境变量名
+        field_mapping = {
+            'speech_app_id': 'SPEECH_APP_ID',
+            'speech_access_key': 'SPEECH_ACCESS_KEY',
+            'speech_secret_key': 'SPEECH_SECRET_KEY',
+            'speech_model_id': 'SPEECH_MODEL_ID',
+            'amap_api_key': 'AMAP_API_KEY',
+            'amap_api_secret': 'AMAP_API_SECRET',
+            'ark_api_key': 'ARK_API_KEY',
+            'ark_base_url': 'ARK_BASE_URL',
+            'deepseek_model': 'DEEPSEEK_MODEL',
+            'supabase_url': 'SUPABASE_URL',
+            'supabase_key': 'SUPABASE_KEY',
+            'flask_secret_key': 'FLASK_SECRET_KEY'
+        }
+        
+        # 更新配置
+        updated_keys = []
+        for field_name, env_name in field_mapping.items():
+            if field_name in config_data:
+                env_lines[env_name] = config_data[field_name]
+                updated_keys.append(env_name)
+        
+        # 写回.env文件
+        with open(env_path, 'w', encoding='utf-8') as f:
+            f.write('# ============================================================\n')
+            f.write('# AI旅行规划师 - 环境变量配置\n')
+            f.write('# 火山方舟流式语音识别版\n')
+            f.write('# ============================================================\n\n\n')
+            
+            f.write('# ============================================================\n')
+            f.write('# 火山方舟流式语音识别大模型\n')
+            f.write('# ============================================================\n')
+            f.write(f"SPEECH_APP_ID={env_lines.get('SPEECH_APP_ID', '')}\n")
+            f.write(f"SPEECH_ACCESS_KEY={env_lines.get('SPEECH_ACCESS_KEY', '')}\n")
+            f.write(f"SPEECH_SECRET_KEY={env_lines.get('SPEECH_SECRET_KEY', '')}\n")
+            f.write(f"SPEECH_MODEL_ID={env_lines.get('SPEECH_MODEL_ID', '')}\n\n\n")
+            
+            f.write('# ============================================================\n')
+            f.write('# 高德地图API\n')
+            f.write('# ============================================================\n')
+            f.write(f"AMAP_API_KEY={env_lines.get('AMAP_API_KEY', '')}\n")
+            f.write(f"AMAP_API_SECRET={env_lines.get('AMAP_API_SECRET', '')}\n\n\n")
+            
+            f.write('# ============================================================\n')
+            f.write('# 火山方舟 DeepSeek LLM API（旅行规划）\n')
+            f.write('# ============================================================\n')
+            f.write(f"ARK_API_KEY={env_lines.get('ARK_API_KEY', '')}\n")
+            f.write(f"ARK_BASE_URL={env_lines.get('ARK_BASE_URL', 'https://ark.cn-beijing.volces.com/api/v3')}\n")
+            f.write(f"DEEPSEEK_MODEL={env_lines.get('DEEPSEEK_MODEL', '')}\n\n\n")
+            
+            f.write('# ============================================================\n')
+            f.write('# Supabase数据库配置\n')
+            f.write('# ============================================================\n')
+            f.write(f"SUPABASE_URL={env_lines.get('SUPABASE_URL', '')}\n")
+            f.write(f"SUPABASE_KEY={env_lines.get('SUPABASE_KEY', '')}\n\n\n")
+            
+            f.write('# ============================================================\n')
+            f.write('# Flask配置\n')
+            f.write('# ============================================================\n')
+            f.write(f"FLASK_SECRET_KEY={env_lines.get('FLASK_SECRET_KEY', 'your-secret-key-change-in-production')}\n")
+            f.write(f"FLASK_ENV={env_lines.get('FLASK_ENV', 'development')}\n")
+        
+        # 重新加载配置
+        Config.load_from_file()
+        
+        # 重新初始化服务
+        global deepseek_service, speech_recognition_service, supabase_service, amap_service
+        deepseek_service = DeepSeekService()
+        speech_recognition_service = SpeechRecognitionService()
+        supabase_service = SupabaseService()
+        amap_service = AmapService()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'成功更新 {len(updated_keys)} 项配置',
+            'updated_keys': updated_keys
+        })
+    except Exception as e:
+        print(f"保存配置失败: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @app.route('/api/travel/plan', methods=['POST'])
 def create_travel_plan():
     """创建旅行计划"""

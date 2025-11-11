@@ -244,11 +244,13 @@ function initEventListeners() {
     // 退出登录
     document.getElementById('logoutBtn').addEventListener('click', logout);
     
-    // 偏好设置和费用记录
+    // API设置、偏好设置和费用记录
+    document.getElementById('settingsBtn').addEventListener('click', openSettingsModal);
     document.getElementById('preferencesBtn').addEventListener('click', openPreferencesModal);
     document.getElementById('expensesBtn').addEventListener('click', openExpensesModal);
     
     // 表单提交
+    document.getElementById('settingsForm').addEventListener('submit', saveSettings);
     document.getElementById('preferencesForm').addEventListener('submit', savePreferences);
     document.getElementById('addExpenseForm').addEventListener('submit', addExpense);
     
@@ -924,10 +926,104 @@ async function deletePlan(planId) {
     }
 }
 
+// ==================== API设置功能 ====================
+
+async function openSettingsModal() {
+    const modal = document.getElementById('settingsModal');
+    modal.classList.add('active');
+    await loadCurrentSettings();
+}
+
+function closeSettingsModal() {
+    const modal = document.getElementById('settingsModal');
+    modal.classList.remove('active');
+}
+
+async function loadCurrentSettings() {
+    try {
+        const response = await fetch('/api/config/all');
+        const data = await response.json();
+        
+        const form = document.getElementById('settingsForm');
+        
+        // 填充当前配置（只显示是否已配置，不显示实际值）
+        if (data.speech_configured) {
+            form.speech_app_id.placeholder = '已配置 ✓';
+            form.speech_access_key.placeholder = '已配置 ✓';
+            form.speech_secret_key.placeholder = '已配置 ✓';
+            form.speech_model_id.placeholder = '已配置 ✓';
+        }
+        if (data.amap_configured) {
+            form.amap_api_key.placeholder = '已配置 ✓';
+            form.amap_api_secret.placeholder = '已配置 ✓';
+        }
+        if (data.deepseek_configured) {
+            form.ark_api_key.placeholder = '已配置 ✓';
+            form.deepseek_model.placeholder = '已配置 ✓';
+        }
+        if (data.supabase_configured) {
+            form.supabase_url.placeholder = '已配置 ✓';
+            form.supabase_key.placeholder = '已配置 ✓';
+        }
+        if (data.flask_configured) {
+            form.flask_secret_key.placeholder = '已配置 ✓';
+        }
+    } catch (error) {
+        console.error('加载配置失败:', error);
+    }
+}
+
+async function saveSettings(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const formData = new FormData(form);
+    
+    // 构建配置对象（只包含非空值）
+    const config = {};
+    for (const [key, value] of formData.entries()) {
+        if (value.trim()) {
+            config[key] = value.trim();
+        }
+    }
+    
+    if (Object.keys(config).length === 0) {
+        alert('请至少填写一项配置');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/config/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(config)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✅ 配置保存成功！\n\n' + (data.message || '配置已更新到 .env 文件'));
+            closeSettingsModal();
+            form.reset();
+            
+            // 重新加载配置状态
+            await loadCurrentSettings();
+        } else {
+            alert('❌ 保存失败：' + (data.message || '未知错误'));
+        }
+    } catch (error) {
+        console.error('保存配置失败:', error);
+        alert('❌ 保存失败，请稍后重试');
+    }
+}
+
 // 全局函数（供HTML调用）
 window.loadPlan = loadPlan;
 window.deletePlan = deletePlan;
 window.closeModal = closeModal;
+window.closeSettingsModal = closeSettingsModal;
 window.closePreferencesModal = closePreferencesModal;
 window.closeExpensesModal = closeExpensesModal;
 window.deleteExpense = deleteExpense;
