@@ -326,6 +326,9 @@ ALTER TABLE expenses DISABLE ROW LEVEL SECURITY;
     .catch(err => console.error('麦克风错误:', err));
   ```
 
+**Docker环境中的401错误**：
+- 📖 如果在Docker中遇到语音识别401认证错误，请查看：[Docker故障排查指南](DOCKER_TROUBLESHOOTING.md)
+
 ### 3. API配置问题
 
 **问题**：提示API未配置或调用失败

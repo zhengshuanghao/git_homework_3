@@ -21,6 +21,19 @@ app.config.from_object(Config)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+# 打印配置状态（用于调试，不显示实际值）
+print("=" * 60)
+print("应用启动 - 配置状态检查")
+print("=" * 60)
+print(f"语音识别 APP_ID: {'已设置' if Config.SPEECH_APP_ID else '❌ 未设置'}")
+print(f"语音识别 ACCESS_KEY: {'已设置' if Config.SPEECH_ACCESS_KEY else '❌ 未设置'}")
+print(f"语音识别 SECRET_KEY: {'已设置' if Config.SPEECH_SECRET_KEY else '❌ 未设置'}")
+print(f"语音识别 MODEL_ID: {Config.SPEECH_MODEL_ID if Config.SPEECH_MODEL_ID else '❌ 未设置'}")
+print(f"高德地图 API_KEY: {'已设置' if Config.AMAP_API_KEY else '❌ 未设置'}")
+print(f"DeepSeek API_KEY: {'已设置' if Config.DEEPSEEK_API_KEY else '❌ 未设置'}")
+print(f"Supabase URL: {'已设置' if Config.SUPABASE_URL else '❌ 未设置'}")
+print("=" * 60)
+
 # 初始化服务
 speech_recognition_service = SpeechRecognitionSyncWrapper(
     app_id=Config.SPEECH_APP_ID,

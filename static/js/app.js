@@ -641,6 +641,15 @@ function hideLoading() {
     document.getElementById('loadingOverlay').style.display = 'none';
 }
 
+// ==================== 模态框管理 ====================
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
 // ==================== 偏好设置功能 ====================
 
 function openPreferencesModal() {

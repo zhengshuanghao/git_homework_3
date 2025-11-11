@@ -30,9 +30,9 @@ services:
       - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-change-me-in-production}
       - FLASK_ENV=${FLASK_ENV:-production}
     
-    # 可选：挂载.env文件
-    # env_file:
-    #   - .env
+    # 推荐：使用 .env 文件（确保 .env 文件存在且包含所有必需的密钥）
+    env_file:
+      - .env
     
     restart: unless-stopped
     

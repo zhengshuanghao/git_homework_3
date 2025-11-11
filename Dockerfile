@@ -24,10 +24,8 @@ RUN pip install --upgrade pip && \
 # 复制项目文件
 COPY . .
 
-# 创建.env文件（如果不存在）
-RUN if [ ! -f .env ]; then \
-    echo "# 请在运行容器时通过环境变量或挂载.env文件配置API密钥" > .env; \
-    fi
+# 注意：.env 文件应该通过 docker-compose.yml 的环境变量或挂载传入
+# 不在镜像中创建 .env 文件，以避免包含敏感信息
 
 # 暴露端口
 EXPOSE 8080
