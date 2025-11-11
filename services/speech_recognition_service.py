@@ -95,7 +95,7 @@ class RequestBuilder:
                 "uid": "web_user"
             },
             "audio": {
-                "format": "wav",
+                "format": "pcm",  # 改为 pcm，因为我们发送的是原始 PCM 数据
                 "codec": "raw",
                 "rate": 16000,
                 "bits": 16,
@@ -150,51 +150,85 @@ class RequestBuilder:
 # ==================== 响应解析 ====================
 
 class ResponseParser:
-    """解析服务器响应"""
+    """解析服务器响应（完全按照官方示例实现）"""
     
     @staticmethod
-    def parse_response(data: bytes) -> Dict[str, Any]:
+    def parse_response(msg: bytes) -> Dict[str, Any]:
         """解析二进制响应"""
         try:
-            if len(data) < 4:
-                return {"error": f"Response too short: {len(data)} bytes"}
+            if len(msg) < 4:
+                return {"error": f"Response too short: {len(msg)} bytes"}
             
-            # 解析头部第一个字节
-            header_byte = data[0]
-            version = (header_byte >> 4) & 0x0F
-            header_size = header_byte & 0x0F  # 头部实际大小（单位：4字节）
+            # 解析头部（与官方示例完全一致）
+            header_size = msg[0] & 0x0f
+            message_type = msg[1] >> 4
+            message_type_specific_flags = msg[1] & 0x0f
+            serialization_method = msg[2] >> 4
+            message_compression = msg[2] & 0x0f
             
-            # 计算实际头部字节数
-            actual_header_bytes = header_size * 4
+            print(f"[调试响应] header_size={header_size}, msg_type={message_type}, flags={message_type_specific_flags:04b}, serialization={serialization_method}, compression={message_compression}")
             
-            message_type_byte = data[1]
-            message_type = (message_type_byte >> 4) & 0x0F
-            message_type_specific_flags = message_type_byte & 0x0F
+            # 跳过头部，获取payload部分
+            payload = msg[header_size * 4:]
             
-            serialization_compression_byte = data[2]
-            serialization_type = (serialization_compression_byte >> 4) & 0x0F
-            compression_type = serialization_compression_byte & 0x0F
+            if len(payload) == 0:
+                return {"error": "Empty payload after header"}
             
-            # 调试信息
-            print(f"[调试响应] version={version}, header_size={header_size} ({actual_header_bytes}字节), msg_type={message_type}, serialization={serialization_type}, compression={compression_type}")
+            # 解析序列号（根据flags条件解析）
+            seq = 0
+            if message_type_specific_flags & 0x01:  # 如果有序列号标志
+                if len(payload) < 4:
+                    return {"error": "Payload too short for sequence"}
+                seq = struct.unpack('>i', payload[:4])[0]
+                payload = payload[4:]
+                print(f"[调试响应] 解析到序列号: {seq}")
             
-            # 检查数据长度是否足够
-            if len(data) < actual_header_bytes + 8:
-                return {"error": f"Data too short for header+seq+size: need {actual_header_bytes+8}, got {len(data)}"}
+            # 解析is_last标志
+            is_last = False
+            if message_type_specific_flags & 0x02:  # 如果是最后一个包
+                is_last = True
+                print(f"[调试响应] 这是最后一个包")
             
-            # 序列号和payload大小在头部之后
-            seq = struct.unpack('>i', data[actual_header_bytes:actual_header_bytes+4])[0]
-            payload_size = struct.unpack('>I', data[actual_header_bytes+4:actual_header_bytes+8])[0]
+            # 解析event（如果有）
+            event = 0
+            if message_type_specific_flags & 0x04:  # 如果有event标志
+                if len(payload) < 4:
+                    return {"error": "Payload too short for event"}
+                event = struct.unpack('>i', payload[:4])[0]
+                payload = payload[4:]
+                print(f"[调试响应] 解析到event: {event}")
             
-            print(f"[调试响应] seq={seq}, payload_size={payload_size}, total_data_size={len(data)}")
+            # 根据message_type解析payload_size
+            payload_size = 0
+            code = 0
+            if message_type == MessageType.SERVER_FULL_RESPONSE:
+                if len(payload) < 4:
+                    return {"error": "Payload too short for payload_size"}
+                payload_size = struct.unpack('>I', payload[:4])[0]
+                payload = payload[4:]
+                print(f"[调试响应] SERVER_FULL_RESPONSE, payload_size={payload_size}")
+            elif message_type == MessageType.SERVER_ERROR_RESPONSE:
+                if len(payload) < 8:
+                    return {"error": "Payload too short for error code and payload_size"}
+                code = struct.unpack('>i', payload[:4])[0]
+                payload_size = struct.unpack('>I', payload[4:8])[0]
+                payload = payload[8:]
+                print(f"[调试响应] SERVER_ERROR_RESPONSE, code={code}, payload_size={payload_size}")
             
-            # 解析payload
-            payload_start = actual_header_bytes + 8
-            payload_data = data[payload_start:payload_start+payload_size]
-            print(f"[调试响应] payload_start={payload_start}, payload_data长度: {len(payload_data)}")
+            # 提取实际的payload数据
+            if payload_size > 0:
+                if len(payload) < payload_size:
+                    print(f"[警告] Payload数据不完整: 需要{payload_size}, 实际{len(payload)}")
+                    payload_data = payload
+                else:
+                    payload_data = payload[:payload_size]
+            else:
+                payload_data = payload
+            
+            print(f"[调试响应] payload_data长度: {len(payload_data)}")
             
             # 解压缩
-            if compression_type == CompressionType.GZIP:
+            if message_compression == CompressionType.GZIP:
                 try:
                     payload_data = gzip.decompress(payload_data)
                     print(f"[调试响应] 解压后长度: {len(payload_data)}")
@@ -203,28 +237,30 @@ class ResponseParser:
                     return {"error": f"Decompression failed: {str(e)}"}
             
             # 反序列化
-            payload = {}
-            if serialization_type == SerializationType.JSON:
+            payload_msg = None
+            if serialization_method == SerializationType.JSON:
                 if len(payload_data) == 0:
-                    print("[调试响应] Payload为空，返回空字典")
-                    payload = {}
+                    print("[调试响应] Payload为空")
+                    payload_msg = {}
                 else:
                     try:
                         payload_str = payload_data.decode('utf-8')
-                        print(f"[调试响应] JSON字符串: {payload_str[:200]}")  # 只打印前200字符
-                        payload = json.loads(payload_str)
+                        print(f"[调试响应] JSON字符串 (前200字符): {payload_str[:200]}")
+                        payload_msg = json.loads(payload_str)
+                        print(f"[调试响应] JSON解析成功")
                     except Exception as e:
                         print(f"[调试响应] JSON解析失败: {e}")
+                        print(f"[调试响应] 原始数据 (hex): {payload_data[:100].hex()}")
                         return {"error": f"JSON parse failed: {str(e)}"}
-            elif serialization_type == SerializationType.NO_SERIALIZATION:
-                print("[调试响应] 无序列化类型")
-                payload = {}
             
             return {
                 "message_type": message_type,
                 "seq": seq,
-                "payload": payload,
-                "is_last": message_type_specific_flags == MessageTypeSpecificFlags.NEG_SEQUENCE
+                "code": code,
+                "event": event,
+                "is_last": is_last,
+                "payload": payload_msg or {},
+                "payload_size": payload_size
             }
         except Exception as e:
             print(f"[调试响应] 解析异常: {e}")
@@ -264,6 +300,8 @@ class SpeechRecognitionService:
         """建立 WebSocket 连接"""
         try:
             headers = RequestBuilder.new_auth_headers(self.app_key, self.access_key)
+            print(f"[调试] 准备连接: {self.url}")
+            print(f"[调试] 请求头: {list(headers.keys())}")
             
             self.session = aiohttp.ClientSession()
             self.ws = await self.session.ws_connect(self.url, headers=headers)
@@ -277,41 +315,96 @@ class SpeechRecognitionService:
             # 启动接收任务
             asyncio.create_task(self._receive_messages())
             
-        except Exception as e:
-            print(f"[X] 语音识别连接失败: {str(e)}")
+        except aiohttp.ClientError as e:
+            error_msg = f"网络连接失败: {str(e)}"
+            print(f"[X] {error_msg}")
+            print(f"[X] 详细错误: {type(e).__name__}: {e}")
             self.is_connected = False
             if self.on_error_callback:
-                self.on_error_callback(f"连接失败: {str(e)}")
+                self.on_error_callback(error_msg)
+            raise
+        except Exception as e:
+            error_msg = f"连接失败: {type(e).__name__}: {str(e)}"
+            print(f"[X] {error_msg}")
+            import traceback
+            traceback.print_exc()
+            self.is_connected = False
+            if self.on_error_callback:
+                self.on_error_callback(error_msg)
+            raise
     
     async def _send_full_request(self):
         """发送初始化请求"""
         try:
             request = RequestBuilder.new_full_client_request(self.seq)
-            print(f"[调试] 发送初始化请求，seq={self.seq}")
+            print(f"[调试] 发送初始化请求，seq={self.seq}, request_size={len(request)}")
             self.seq += 1
             
             await self.ws.send_bytes(request)
             print("[OK] 已发送初始化请求")
             
-            # 等待初始化响应
-            msg = await self.ws.receive()
+            # 等待初始化响应（设置超时）
+            try:
+                msg = await asyncio.wait_for(self.ws.receive(), timeout=10.0)
+            except asyncio.TimeoutError:
+                error_msg = "等待初始化响应超时（10秒）"
+                print(f"[X] {error_msg}")
+                self.is_connected = False
+                raise Exception(error_msg)
+            
+            print(f"[调试] 收到响应类型: {msg.type}")
+            
             if msg.type == aiohttp.WSMsgType.BINARY:
+                print(f"[调试] 响应数据长度: {len(msg.data)}")
                 response = ResponseParser.parse_response(msg.data)
+                print(f"[调试] 解析后的响应: {response}")
+                
+                # 检查是否有解析错误
+                if 'error' in response:
+                    error_msg = f"响应解析错误: {response['error']}"
+                    print(f"[X] {error_msg}")
+                    self.is_connected = False
+                    raise Exception(error_msg)
+                
+                # 检查消息类型
+                message_type = response.get('message_type')
                 payload = response.get('payload', {})
                 
-                # 检查是否有错误
-                if 'error' in response:
-                    print(f"[X] 初始化响应错误: {response['error']}")
-                    raise Exception(response['error'])
-                elif payload.get('code') != 0:
-                    error_msg = payload.get('message', '未知错误')
-                    print(f"[X] 初始化失败 (code={payload.get('code')}): {error_msg}")
-                    raise Exception(error_msg)
-                else:
+                # SERVER_ERROR_RESPONSE (0x0F) 才需要检查 code
+                if message_type == MessageType.SERVER_ERROR_RESPONSE:
+                    code = response.get('code', 0)
+                    if code != 0:
+                        error_msg = payload.get('message', f"初始化失败，错误码: {code}")
+                        print(f"[X] 初始化失败 (code={code}): {error_msg}")
+                        print(f"[X] 完整响应: {payload}")
+                        self.is_connected = False
+                        raise Exception(error_msg)
+                
+                # SERVER_FULL_RESPONSE (0x09) 表示成功，不需要检查 code
+                if message_type == MessageType.SERVER_FULL_RESPONSE:
                     print(f"[OK] 初始化成功: {payload}")
+                else:
+                    print(f"[OK] 初始化成功 (message_type={message_type}): {payload}")
+            elif msg.type == aiohttp.WSMsgType.ERROR:
+                error_msg = f"WebSocket错误: {msg.data}"
+                print(f"[X] {error_msg}")
+                self.is_connected = False
+                raise Exception(error_msg)
+            elif msg.type == aiohttp.WSMsgType.CLOSED:
+                error_msg = "WebSocket连接已关闭"
+                print(f"[X] {error_msg}")
+                self.is_connected = False
+                raise Exception(error_msg)
+            else:
+                error_msg = f"意外的消息类型: {msg.type}"
+                print(f"[X] {error_msg}")
+                self.is_connected = False
+                raise Exception(error_msg)
             
         except Exception as e:
-            print(f"[X] 发送初始化请求失败: {str(e)}")
+            print(f"[X] 发送初始化请求失败: {type(e).__name__}: {str(e)}")
+            import traceback
+            traceback.print_exc()
             self.is_connected = False
             raise
     
@@ -347,38 +440,121 @@ class SpeechRecognitionService:
     def _handle_response(self, response: Dict[str, Any]):
         """处理识别结果"""
         try:
+            message_type = response.get('message_type')
             payload = response.get('payload', {})
             
-            # 检查错误
+            # 检查解析错误
             if 'error' in response:
-                print(f"[X] 响应错误: {response['error']}")
+                print(f"[X] 响应解析错误: {response['error']}")
+                if self.on_error_callback:
+                    self.on_error_callback(f"响应解析错误: {response['error']}")
                 return
             
-            # 检查code
-            code = payload.get('code', 0)
-            if code != 0:
-                error_msg = payload.get('message', '未知错误')
+            # 检查错误响应类型
+            if message_type == MessageType.SERVER_ERROR_RESPONSE:
+                code = response.get('code', 0)
+                error_msg = payload.get('error', payload.get('message', f'错误码: {code}'))
                 print(f"[X] 识别错误 (code={code}): {error_msg}")
                 if self.on_error_callback:
                     self.on_error_callback(error_msg)
                 return
             
-            # 提取识别结果
-            result = payload.get('result', {})
-            text = result.get('text', '')
-            is_final = result.get('is_final', False)
-            
-            if text:
-                print(f"[语音识别] {'最终' if is_final else '临时'}结果: {text}")
+            # 处理正常响应
+            if message_type == MessageType.SERVER_FULL_RESPONSE:
+                # 检查payload中的错误
+                if 'error' in payload:
+                    error_msg = payload.get('error', '未知错误')
+                    print(f"[X] 识别错误: {error_msg}")
+                    if self.on_error_callback:
+                        self.on_error_callback(error_msg)
+                    return
                 
-                if self.on_result_callback:
-                    self.on_result_callback({
-                        'text': text,
-                        'is_final': is_final
-                    })
+                # 提取识别结果
+                result = payload.get('result', {})
+                text = result.get('text', '')
+                is_final = result.get('is_final', False)
+                
+                if text:
+                    print(f"[语音识别] {'最终' if is_final else '临时'}结果: {text}")
+                    
+                    if self.on_result_callback:
+                        self.on_result_callback({
+                            'text': text,
+                            'is_final': is_final
+                        })
+            else:
+                # 其他类型的响应（可能是中间结果）
+                result = payload.get('result', {})
+                text = result.get('text', '')
+                is_final = result.get('is_final', False)
+                
+                if text:
+                    print(f"[语音识别] {'最终' if is_final else '临时'}结果: {text}")
+                    
+                    if self.on_result_callback:
+                        self.on_result_callback({
+                            'text': text,
+                            'is_final': is_final
+                        })
                     
         except Exception as e:
             print(f"[X] 处理响应失败: {str(e)}")
+            import traceback
+            traceback.print_exc()
+    
+    @staticmethod
+    def _pcm_to_wav_data(pcm_data: bytes, sample_rate: int = 16000, channels: int = 1, bits_per_sample: int = 16) -> bytes:
+        """将PCM数据包装成WAV格式的data chunk
+        
+        根据错误信息"invalid WAV file format"，API期望WAV格式。
+        但根据官方示例，应该发送WAV文件的data部分（去掉WAV头）。
+        这里先尝试发送WAV的data chunk（包含"data"标识和大小）。
+        """
+        # WAV格式的data chunk结构：
+        # - "data" (4 bytes)
+        # - data size (4 bytes, little-endian)
+        # - PCM data
+        
+        data_size = len(pcm_data)
+        wav_data = bytearray()
+        wav_data.extend(b'data')  # data chunk ID
+        wav_data.extend(struct.pack('<I', data_size))  # data size (little-endian)
+        wav_data.extend(pcm_data)  # PCM data
+        
+        return bytes(wav_data)
+    
+    @staticmethod
+    def _pcm_to_full_wav(pcm_data: bytes, sample_rate: int = 16000, channels: int = 1, bits_per_sample: int = 16) -> bytes:
+        """将PCM数据包装成完整的WAV文件格式（包含RIFF头和fmt子块）
+        
+        如果data chunk方式不行，可以尝试这种方式。
+        """
+        data_size = len(pcm_data)
+        byte_rate = sample_rate * channels * (bits_per_sample // 8)
+        block_align = channels * (bits_per_sample // 8)
+        
+        wav = bytearray()
+        # RIFF头
+        wav.extend(b'RIFF')
+        wav.extend(struct.pack('<I', 36 + data_size))  # 文件大小 - 8
+        wav.extend(b'WAVE')
+        
+        # fmt子块
+        wav.extend(b'fmt ')
+        wav.extend(struct.pack('<I', 16))  # fmt子块大小
+        wav.extend(struct.pack('<H', 1))  # 音频格式 (1 = PCM)
+        wav.extend(struct.pack('<H', channels))  # 声道数
+        wav.extend(struct.pack('<I', sample_rate))  # 采样率
+        wav.extend(struct.pack('<I', byte_rate))  # 字节率
+        wav.extend(struct.pack('<H', block_align))  # 块对齐
+        wav.extend(struct.pack('<H', bits_per_sample))  # 位深度
+        
+        # data子块
+        wav.extend(b'data')
+        wav.extend(struct.pack('<I', data_size))  # data大小
+        wav.extend(pcm_data)  # PCM数据
+        
+        return bytes(wav)
     
     async def send_audio(self, audio_data: bytes):
         """发送音频数据"""
@@ -404,10 +580,13 @@ class SpeechRecognitionService:
                 chunk = bytes(self.audio_buffer[:self.chunk_size])
                 self.audio_buffer = self.audio_buffer[self.chunk_size:]
                 
+                # 根据官方示例，直接发送原始PCM数据（从WAV文件中提取的data部分）
+                # 不包装成任何格式，API会根据初始化请求中的配置来解析
+                
                 # 构建音频请求
                 request = RequestBuilder.new_audio_only_request(
                     self.seq,
-                    chunk,
+                    chunk,  # 直接发送原始PCM数据
                     is_last=False
                 )
                 self.seq += 1
@@ -427,9 +606,10 @@ class SpeechRecognitionService:
             # 发送缓冲区剩余数据（如果有）
             if len(self.audio_buffer) > 0:
                 chunk = bytes(self.audio_buffer)
+                # 直接发送原始PCM数据
                 request = RequestBuilder.new_audio_only_request(
                     self.seq,
-                    chunk,
+                    chunk,  # 直接发送原始PCM数据
                     is_last=True
                 )
                 await self.ws.send_bytes(request)
@@ -491,14 +671,25 @@ class SpeechRecognitionSyncWrapper:
         import time
         
         self.service.set_callbacks(on_result, on_error)
+        self._connection_error = None  # 存储连接错误
         
         def run_loop():
             self.loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.loop)
             self.is_running = True
             
-            # 连接服务
-            self.loop.run_until_complete(self.service.connect())
+            try:
+                # 连接服务
+                self.loop.run_until_complete(self.service.connect())
+            except Exception as e:
+                # 捕获连接错误
+                self._connection_error = str(e)
+                print(f"[X] 连接线程中的错误: {e}")
+                import traceback
+                traceback.print_exc()
+                if on_error:
+                    on_error(f"连接失败: {str(e)}")
+                return
             
             # 保持循环运行
             try:
@@ -510,8 +701,19 @@ class SpeechRecognitionSyncWrapper:
         self.thread = threading.Thread(target=run_loop, daemon=True)
         self.thread.start()
         
-        # 等待连接建立
-        time.sleep(1.5)
+        # 等待连接建立（最多等待3秒）
+        for i in range(30):  # 30 * 0.1 = 3秒
+            time.sleep(0.1)
+            if self._connection_error:
+                raise Exception(self._connection_error)
+            if self.service.is_connected:
+                return
+        
+        # 如果3秒后还没连接，检查是否有错误
+        if self._connection_error:
+            raise Exception(self._connection_error)
+        if not self.service.is_connected:
+            raise Exception("连接超时：3秒内未能建立连接")
     
     def send_audio(self, audio_data):
         """发送音频数据（线程安全）"""
