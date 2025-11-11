@@ -1,4 +1,4 @@
-# Docker 部署指南
+﻿# Docker 部署指南
 
 ## 📦 获取Docker镜像
 
@@ -6,10 +6,10 @@
 
 ```bash
 # 拉取最新版本
-docker pull registry.cn-hangzhou.aliyuncs.com/ai-travel-planner/ai-travel-planner:latest
+docker pull registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 
 # 或拉取指定版本
-docker pull registry.cn-hangzhou.aliyuncs.com/ai-travel-planner/ai-travel-planner:v1.0.0
+docker pull registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:v1.0.0
 ```
 
 ### 方式二：本地构建
@@ -40,7 +40,7 @@ docker run -d \
   -e DEEPSEEK_MODEL=your_model_id \
   -e SUPABASE_URL=your_supabase_url \
   -e SUPABASE_KEY=your_supabase_key \
-  registry.cn-hangzhou.aliyuncs.com/ai-travel-planner/ai-travel-planner:latest
+  registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 ```
 
 ### 方式二：使用docker-compose（推荐）
@@ -204,7 +204,7 @@ docker logs ai-travel-planner --tail 100
 
 ```bash
 # 拉取最新镜像
-docker pull registry.cn-hangzhou.aliyuncs.com/ai-travel-planner/ai-travel-planner:latest
+docker pull registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 
 # 停止并删除旧容器
 docker-compose down
@@ -217,7 +217,7 @@ docker-compose up -d
 
 1. **使用具体版本标签**
    ```bash
-   docker pull registry.cn-hangzhou.aliyuncs.com/ai-travel-planner/ai-travel-planner:v1.0.0
+   docker pull registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:v1.0.0
    ```
 
 2. **配置资源限制**

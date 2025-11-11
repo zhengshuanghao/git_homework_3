@@ -1,4 +1,4 @@
-# 🚀 Docker快速开始指南
+﻿# 🚀 Docker快速开始指南
 
 ## 5分钟快速部署
 
@@ -10,7 +10,7 @@
 ### 步骤1：拉取镜像
 
 ```bash
-docker pull registry.cn-hangzhou.aliyuncs.com/ai-travel-planner/ai-travel-planner:latest
+docker pull registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 ```
 
 ### 步骤2：准备配置
@@ -41,7 +41,7 @@ docker run -d \
   --name ai-travel-planner \
   -p 8080:8080 \
   --env-file .env \
-  registry.cn-hangzhou.aliyuncs.com/ai-travel-planner/ai-travel-planner:latest
+  registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 ```
 
 **方式B：直接指定环境变量**
@@ -54,7 +54,7 @@ docker run -d \
   -e DEEPSEEK_MODEL=你的模型ID \
   -e SUPABASE_URL=你的URL \
   -e SUPABASE_KEY=你的密钥 \
-  registry.cn-hangzhou.aliyuncs.com/ai-travel-planner/ai-travel-planner:latest
+  registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 ```
 
 ### 步骤4：访问应用
@@ -87,7 +87,7 @@ docker start ai-travel-planner
 docker rm -f ai-travel-planner
 
 # 更新到最新版本
-docker pull registry.cn-hangzhou.aliyuncs.com/ai-travel-planner/ai-travel-planner:latest
+docker pull registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 docker stop ai-travel-planner
 docker rm ai-travel-planner
 # 然后重新运行步骤3

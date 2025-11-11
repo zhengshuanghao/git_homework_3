@@ -1,4 +1,4 @@
-# GitHub Actions 自动构建配置指南
+﻿# GitHub Actions 自动构建配置指南
 
 ## 📋 前置准备
 
@@ -116,7 +116,7 @@ GitHub Actions会自动生成以下标签：
 ### 公开仓库
 
 ```bash
-docker pull registry.cn-hangzhou.aliyuncs.com/ai-travel-planner/ai-travel-planner:latest
+docker pull registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 ```
 
 ### 私有仓库
@@ -126,7 +126,7 @@ docker pull registry.cn-hangzhou.aliyuncs.com/ai-travel-planner/ai-travel-planne
 docker login --username=<AccessKey ID> registry.cn-hangzhou.aliyuncs.com
 
 # 拉取
-docker pull registry.cn-hangzhou.aliyuncs.com/ai-travel-planner/ai-travel-planner:latest
+docker pull registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 ```
 
 ## 🔧 自定义配置
@@ -227,7 +227,7 @@ git push origin feature/new-feature
 # GitHub Actions自动构建并推送镜像
 
 # 5. 拉取最新镜像
-docker pull registry.cn-hangzhou.aliyuncs.com/ai-travel-planner/ai-travel-planner:latest
+docker pull registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 ```
 
 ### 发布流程
@@ -241,7 +241,7 @@ git push origin v1.0.0
 # GitHub Actions自动构建v1.0.0标签的镜像
 
 # 3. 拉取特定版本
-docker pull registry.cn-hangzhou.aliyuncs.com/ai-travel-planner/ai-travel-planner:v1.0.0
+docker pull registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:v1.0.0
 ```
 
 ## 🎯 最佳实践

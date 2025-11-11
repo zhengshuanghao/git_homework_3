@@ -17,9 +17,9 @@ env:
   # 阿里云镜像仓库配置
   REGISTRY: registry.cn-hangzhou.aliyuncs.com
   # 命名空间（需要在阿里云容器镜像服务中创建）
-  NAMESPACE: ai-travel-planner
+  NAMESPACE: ai_travel_planner_zsh
   # 镜像名称
-  IMAGE_NAME: ai-travel-planner
+  IMAGE_NAME: ai_travel_planner_zsh_522025720032
 
 jobs:
   build-and-push:
