@@ -62,10 +62,11 @@ def get_all_config():
             'secret_key_set': bool(app.config.get('SECRET_KEY')),
             'env': app.config.get('ENV', 'production')
         },
-        'iflytek': {
-            'app_id_set': bool(Config.IFLYTEK_APP_ID),
-            'api_key_set': bool(Config.IFLYTEK_API_KEY),
-            'api_secret_set': bool(Config.IFLYTEK_API_SECRET)
+        'speech': {
+            'app_id_set': bool(Config.SPEECH_APP_ID),
+            'access_key_set': bool(Config.SPEECH_ACCESS_KEY),
+            'secret_key_set': bool(Config.SPEECH_SECRET_KEY),
+            'model_id_set': bool(Config.SPEECH_MODEL_ID)
         },
         'amap': {
             'api_key_set': bool(Config.AMAP_API_KEY),
@@ -182,7 +183,12 @@ def save_config_to_env():
         # 重新初始化服务
         global deepseek_service, speech_recognition_service, supabase_service, amap_service
         deepseek_service = DeepSeekService()
-        speech_recognition_service = SpeechRecognitionService()
+        speech_recognition_service = SpeechRecognitionSyncWrapper(
+            app_id=Config.SPEECH_APP_ID,
+            access_key=Config.SPEECH_ACCESS_KEY,
+            secret_key=Config.SPEECH_SECRET_KEY,
+            model_id=Config.SPEECH_MODEL_ID
+        )
         supabase_service = SupabaseService()
         amap_service = AmapService()
         

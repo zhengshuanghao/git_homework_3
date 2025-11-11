@@ -27,7 +27,7 @@ call .venv\Scripts\activate.bat
 REM 启动应用
 echo [2/2] 启动应用...
 echo.
-python run.py
+python app.py
 
 echo.
 echo 服务器已停止。
