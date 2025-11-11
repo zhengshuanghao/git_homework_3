@@ -84,38 +84,7 @@ pip install -r requirements.txt
 创建 `.env` 文件并填入以下配置：
 
 ```env
-# ============================================================
-# 火山方舟流式语音识别
-# ============================================================
-SPEECH_APP_ID=1356755714
-SPEECH_ACCESS_KEY=oPxND_k8BQJveNLg7Mdq9VXRvKgFnIlP
-SPEECH_SECRET_KEY=Aj8WnzaLDOeWTiIcF9zC-7dN2QPypq6h
-SPEECH_MODEL_ID=Speech_Recognition_Seed_streaming2000000451913596898
-
-# ============================================================
-# 高德地图API
-# ============================================================
-AMAP_API_KEY=62b0a02ed7213d7753d65007051c0c6f
-AMAP_API_SECRET=66a262e19c64cdc1109b2c70dd89fee0
-
-# ============================================================
-# 火山方舟 DeepSeek LLM API（旅行规划）
-# ============================================================
-ARK_API_KEY=f93d8bf5-f42b-4f2d-9268-215593175f37
-ARK_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
-DEEPSEEK_MODEL=ep-20251109191548-z4vdn
-
-# ============================================================
-# Supabase数据库配置
-# ============================================================
-SUPABASE_URL=https://hfhxiwcuikcmtpcyyevl.supabase.co
-SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmaHhpd2N1aWtjbXRwY3l5ZXZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1MzczNDksImV4cCI6MjA3ODExMzM0OX0.u9xX7WOMuYq4fBwJI313vc14OfOuSgabylXqUWFSwTQ
-
-# ============================================================
-# Flask配置
-# ============================================================
-FLASK_SECRET_KEY=your-secret-key-change-in-production
-FLASK_ENV=development
+相关API Key请助教在pdf文件中查看
 ```
 
 > **⚠️ 安全提示**：以上密钥仅供开发测试使用，生产环境请更换为您自己的密钥。
