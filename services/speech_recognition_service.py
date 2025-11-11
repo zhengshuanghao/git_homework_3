@@ -129,17 +129,19 @@ class RequestBuilder:
         """生成纯音频请求"""
         header = AsrRequestHeader()
         
+        # 使用 NO_SEQUENCE 标志，让服务器自动管理序列号
         if is_last:
-            header.with_message_type_specific_flags(MessageTypeSpecificFlags.NEG_WITH_SEQUENCE)
-            seq = -seq  # 最后一个包用负数
+            # 最后一个包使用 NEG_SEQUENCE 标志（负序列号标志，但不包含实际序列号）
+            header.with_message_type_specific_flags(MessageTypeSpecificFlags.NEG_SEQUENCE)
         else:
-            header.with_message_type_specific_flags(MessageTypeSpecificFlags.POS_SEQUENCE)
+            # 普通音频包使用 NO_SEQUENCE 标志
+            header.with_message_type_specific_flags(MessageTypeSpecificFlags.NO_SEQUENCE)
         
         header.with_message_type(MessageType.CLIENT_AUDIO_ONLY_REQUEST)
         
         request = bytearray()
         request.extend(header.to_bytes())
-        request.extend(struct.pack('>i', seq))
+        # NO_SEQUENCE 模式下不包含序列号字段
         
         compressed_segment = gzip.compress(segment)
         request.extend(struct.pack('>I', len(compressed_segment)))
@@ -246,13 +248,21 @@ class ResponseParser:
                 else:
                     try:
                         payload_str = payload_data.decode('utf-8')
-                        print(f"[调试响应] JSON字符串 (前200字符): {payload_str[:200]}")
+                        print(f"[调试响应] 数据内容 (前200字符): {payload_str[:200]}")
+                        
+                        # 尝试解析为 JSON
                         payload_msg = json.loads(payload_str)
                         print(f"[调试响应] JSON解析成功")
+                    except json.JSONDecodeError as e:
+                        # 如果不是有效的 JSON，可能是纯文本（如 UUID）
+                        print(f"[调试响应] 非JSON格式，作为纯文本处理: {e}")
+                        # 将纯文本包装成字典
+                        payload_msg = {"text": payload_str}
                     except Exception as e:
-                        print(f"[调试响应] JSON解析失败: {e}")
+                        print(f"[调试响应] 解析失败: {e}")
                         print(f"[调试响应] 原始数据 (hex): {payload_data[:100].hex()}")
-                        return {"error": f"JSON parse failed: {str(e)}"}
+                        # 不返回错误，而是将原始数据作为文本
+                        payload_msg = {"raw": payload_str}
             
             return {
                 "message_type": message_type,
