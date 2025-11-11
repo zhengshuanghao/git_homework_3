@@ -299,6 +299,10 @@ class SpeechRecognitionService:
     async def connect(self):
         """建立 WebSocket 连接"""
         try:
+            # 重置序列号和缓冲区
+            self.seq = 1
+            self.audio_buffer.clear()
+            
             headers = RequestBuilder.new_auth_headers(self.app_key, self.access_key)
             print(f"[调试] 准备连接: {self.url}")
             print(f"[调试] 请求头: {list(headers.keys())}")
@@ -640,6 +644,10 @@ class SpeechRecognitionService:
             if self.session:
                 await self.session.close()
                 self.session = None
+            
+            # 重置序列号和缓冲区
+            self.seq = 1
+            self.audio_buffer.clear()
             
             print("[OK] 语音识别连接已关闭")
             

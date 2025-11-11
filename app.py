@@ -64,7 +64,8 @@ def get_all_config():
         },
         'deepseek': {
             'api_key_set': bool(Config.DEEPSEEK_API_KEY),
-            'base_url': Config.DEEPSEEK_BASE_URL
+            'base_url': Config.ARK_BASE_URL,
+            'model': Config.DEEPSEEK_MODEL
         },
         'supabase': {
             'url_set': bool(Config.SUPABASE_URL),

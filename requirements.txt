@@ -8,4 +8,6 @@ requests==2.31.0
 python-socketio==5.10.0
 flask-socketio==5.3.6
 aiohttp==3.9.1
+volcengine-python-sdk
+certifi
 
