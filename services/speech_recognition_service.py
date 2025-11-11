@@ -87,8 +87,9 @@ class RequestBuilder:
     @staticmethod
     def new_full_client_request(seq: int) -> bytes:
         """生成完整客户端请求（第一个包）"""
+        # 第一个包使用 NO_SEQUENCE 标志，让服务器自动分配序列号
         header = AsrRequestHeader() \
-            .with_message_type_specific_flags(MessageTypeSpecificFlags.POS_SEQUENCE)
+            .with_message_type_specific_flags(MessageTypeSpecificFlags.NO_SEQUENCE)
         
         payload = {
             "user": {
@@ -117,7 +118,7 @@ class RequestBuilder:
         
         request = bytearray()
         request.extend(header.to_bytes())
-        request.extend(struct.pack('>i', seq))
+        # NO_SEQUENCE 标志下不包含序列号字段
         request.extend(struct.pack('>I', payload_size))
         request.extend(compressed_payload)
         
@@ -341,8 +342,7 @@ class SpeechRecognitionService:
         """发送初始化请求"""
         try:
             request = RequestBuilder.new_full_client_request(self.seq)
-            print(f"[调试] 发送初始化请求，seq={self.seq}, request_size={len(request)}")
-            self.seq += 1
+            print(f"[调试] 发送初始化请求 (NO_SEQUENCE), request_size={len(request)}")
             
             await self.ws.send_bytes(request)
             print("[OK] 已发送初始化请求")
@@ -377,14 +377,23 @@ class SpeechRecognitionService:
                 # SERVER_ERROR_RESPONSE (0x0F) 才需要检查 code
                 if message_type == MessageType.SERVER_ERROR_RESPONSE:
                     code = response.get('code', 0)
-                    if code != 0:
-                        error_msg = payload.get('message', f"初始化失败，错误码: {code}")
-                        print(f"[X] 初始化失败 (code={code}): {error_msg}")
-                        print(f"[X] 完整响应: {payload}")
-                        self.is_connected = False
-                        raise Exception(error_msg)
+                    error_msg = payload.get('message', f"初始化失败，错误码: {code}")
+                    print(f"[X] 初始化失败 (code={code}): {error_msg}")
+                    print(f"[X] 完整响应: {payload}")
+                    self.is_connected = False
+                    raise Exception(f"初始化失败，错误码: {code}")
                 
-                # SERVER_FULL_RESPONSE (0x09) 表示成功，不需要检查 code
+                # 从服务器响应中获取序列号，用于后续音频包
+                server_seq = response.get('seq', 0)
+                if server_seq > 0:
+                    self.seq = server_seq + 1
+                    print(f"[OK] 服务器分配序列号: {server_seq}, 下一个音频包将使用 seq={self.seq}")
+                else:
+                    # 如果服务器没有返回序列号，使用默认值
+                    self.seq = 1
+                    print(f"[WARN] 服务器未返回序列号，使用默认 seq={self.seq}")
+                
+                # SERVER_FULL_RESPONSE (0x09) 表示成功
                 if message_type == MessageType.SERVER_FULL_RESPONSE:
                     print(f"[OK] 初始化成功: {payload}")
                 else:
