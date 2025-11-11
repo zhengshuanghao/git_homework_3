@@ -1,4 +1,4 @@
-================================================================================
+﻿================================================================================
                     AI旅行规划师 - Docker部署完成摘要
 ================================================================================
 
@@ -9,7 +9,7 @@
 ================================================================================
 
 镜像仓库地址：
-registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032
+crpi-t07boaz31v5le95c.cn-hangzhou.personal.cr.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032
 
 可用标签：
 - latest（最新版本）
@@ -23,7 +23,7 @@ registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_52
 
 方式一：直接运行（最简单）
 --------------------------
-docker pull registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
+docker pull crpi-t07boaz31v5le95c.cn-hangzhou.personal.cr.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 
 docker run -d \
   --name ai-travel-planner \
@@ -32,7 +32,7 @@ docker run -d \
   -e DEEPSEEK_MODEL=你的模型端点ID \
   -e SUPABASE_URL=https://hfhxiwcuikcmtpcyyevl.supabase.co \
   -e SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmaHhpd2N1aWtjbXRwY3l5ZXZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1MzczNDksImV4cCI6MjA3ODExMzM0OX0.u9xX7WOMuYq4fBwJI313vc14OfOuSgabylXqUWFSwTQ \
-  registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
+  crpi-t07boaz31v5le95c.cn-hangzhou.personal.cr.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 
 访问地址：http://localhost:8080
 
@@ -102,7 +102,7 @@ Actions页面：https://github.com/zhengshuanghao/git_homework_3/actions
 1. 访问GitHub Actions页面，确认构建成功
 2. 访问阿里云容器镜像服务，确认镜像已推送
 3. 本地测试拉取镜像：
-   docker pull registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
+   docker pull crpi-t07boaz31v5le95c.cn-hangzhou.personal.cr.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 4. 运行容器测试功能
 
 ================================================================================

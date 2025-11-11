@@ -14,8 +14,8 @@ on:
   workflow_dispatch:
 
 env:
-  # 阿里云镜像仓库配置
-  REGISTRY: registry.cn-hangzhou.aliyuncs.com
+  # 阿里云镜像仓库配置（个人实例）
+  REGISTRY: crpi-t07boaz31v5le95c.cn-hangzhou.personal.cr.aliyuncs.com
   # 命名空间（需要在阿里云容器镜像服务中创建）
   NAMESPACE: ai_travel_planner_zsh
   # 镜像名称

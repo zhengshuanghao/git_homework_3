@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   ai-travel-planner:
-    image: registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
+    image: crpi-t07boaz31v5le95c.cn-hangzhou.personal.cr.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
     container_name: ai-travel-planner
     ports:
       - "8080:8080"

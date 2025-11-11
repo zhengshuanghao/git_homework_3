@@ -1,4 +1,4 @@
-# 🗺️ AI旅行规划师
+﻿# 🗺️ AI旅行规划师
 
 <div align="center">
 
@@ -69,7 +69,7 @@
 
 ```bash
 # 1. 拉取镜像
-docker pull registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
+docker pull crpi-t07boaz31v5le95c.cn-hangzhou.personal.cr.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 
 # 2. 运行容器（需要配置环境变量）
 docker run -d \
@@ -79,7 +79,7 @@ docker run -d \
   -e DEEPSEEK_MODEL=your_model \
   -e SUPABASE_URL=your_url \
   -e SUPABASE_KEY=your_key \
-  registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
+  crpi-t07boaz31v5le95c.cn-hangzhou.personal.cr.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 
 # 3. 访问应用
 # 打开浏览器访问 http://localhost:8080

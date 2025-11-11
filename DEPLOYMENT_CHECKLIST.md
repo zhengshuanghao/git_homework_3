@@ -58,7 +58,7 @@
 ### 测试1：拉取镜像
 
 ```bash
-docker pull registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
+docker pull crpi-t07boaz31v5le95c.cn-hangzhou.personal.cr.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 ```
 
 预期结果：
@@ -75,7 +75,7 @@ docker run -d \
   -e DEEPSEEK_MODEL=test \
   -e SUPABASE_URL=https://hfhxiwcuikcmtpcyyevl.supabase.co \
   -e SUPABASE_KEY=test \
-  registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
+  crpi-t07boaz31v5le95c.cn-hangzhou.personal.cr.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 ```
 
 预期结果：
@@ -126,11 +126,11 @@ docker rm ai-travel-planner-test
 - [x] `README.md`（包含Docker说明）
 
 ### 镜像信息
-- **镜像地址**：`registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032`
+- **镜像地址**：`crpi-t07boaz31v5le95c.cn-hangzhou.personal.cr.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032`
 - **推荐标签**：`latest` 或 `v1.0.0`
 - **拉取命令**：
   ```bash
-  docker pull registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
+  docker pull crpi-t07boaz31v5le95c.cn-hangzhou.personal.cr.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
   ```
 
 ### 快速启动命令
@@ -142,7 +142,7 @@ docker run -d \
   -e DEEPSEEK_MODEL=你的模型 \
   -e SUPABASE_URL=数据库URL \
   -e SUPABASE_KEY=数据库密钥 \
-  registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
+  crpi-t07boaz31v5le95c.cn-hangzhou.personal.cr.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 ```
 
 ---
@@ -180,16 +180,16 @@ docker run -d \
 GitHub仓库：https://github.com/zhengshuanghao/git_homework_3
 
 Docker镜像地址：
-registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
+crpi-t07boaz31v5le95c.cn-hangzhou.personal.cr.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 
 快速启动：
-docker pull registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
+docker pull crpi-t07boaz31v5le95c.cn-hangzhou.personal.cr.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 docker run -d --name ai-travel-planner -p 8080:8080 \
   -e ARK_API_KEY=你的密钥 \
   -e DEEPSEEK_MODEL=你的模型 \
   -e SUPABASE_URL=数据库URL \
   -e SUPABASE_KEY=数据库密钥 \
-  registry.cn-hangzhou.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
+  crpi-t07boaz31v5le95c.cn-hangzhou.personal.cr.aliyuncs.com/ai_travel_planner_zsh/ai_travel_planner_zsh_522025720032:latest
 
 访问地址：http://localhost:8080
 
