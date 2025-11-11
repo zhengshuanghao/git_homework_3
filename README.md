@@ -1,64 +1,130 @@
-# AI旅行规划师
+# 🗺️ AI旅行规划师
 
-基于AI的智能旅行规划Web应用，支持文字和语音输入，自动生成个性化旅行计划。
+<div align="center">
 
-## 核心功能
+**基于AI的智能旅行规划Web应用**
 
-- **智能行程规划**：AI生成详细旅行路线，包含交通、住宿、景点、餐厅推荐
-- **旅游偏好设置**：保存个人旅行偏好，生成更符合需求的计划
-- **费用记录管理**：记录和统计旅行开销，支持关联具体计划
-- **语音输入**：支持语音输入旅行需求
-- **地图展示**：高德地图展示行程路线和景点位置
-- **用户系统**：注册登录，云端保存所有数据
+支持文字和语音输入 | 自动生成个性化旅行计划 | 费用管理 | 云端同步
 
-## 技术栈
+[快速开始](#快速开始) • [功能特性](#功能特性) • [使用说明](#使用说明) • [常见问题](#常见问题)
 
-- **后端**: Flask + Flask-SocketIO
-- **前端**: HTML5 + CSS3 + JavaScript
-- **AI**: 火山方舟 DeepSeek API
-- **语音**: 科大讯飞实时语音识别
-- **地图**: 高德地图API
-- **数据库**: Supabase (PostgreSQL)
+</div>
 
-## 快速开始
+---
 
-### 1. 安装依赖
+## ✨ 功能特性
+
+### 🎯 核心功能
+
+- **🤖 智能行程规划**
+  - AI生成详细旅行路线
+  - 包含交通、住宿、景点、餐厅推荐
+  - 根据预算推荐具体酒店和餐厅
+
+- **⚙️ 旅游偏好设置**
+  - 8大类偏好设置（旅行风格、住宿、饮食等）
+  - 保存个人偏好，生成更符合需求的计划
+  - AI自动结合偏好生成个性化方案
+
+- **💰 费用记录管理**
+  - 记录和统计旅行开销
+  - 支持关联具体旅行计划
+  - 费用分类汇总和可视化展示
+
+- **🎤 语音输入**
+  - 火山方舟流式语音识别
+  - 实时转换语音为文字
+  - 支持中文识别
+
+- **🗺️ 地图展示**
+  - 高德地图展示行程路线
+  - 标记景点和地点位置
+  - 可视化行程规划
+
+- **👤 用户系统**
+  - 注册登录功能
+  - 云端保存所有数据
+  - 多设备同步访问
+
+---
+
+## 🛠️ 技术栈
+
+| 类别 | 技术 |
+|------|------|
+| **后端框架** | Flask + Flask-SocketIO |
+| **前端** | HTML5 + CSS3 + JavaScript |
+| **AI大模型** | 火山方舟 DeepSeek API |
+| **语音识别** | 火山方舟流式语音识别 |
+| **地图服务** | 高德地图 API |
+| **数据库** | Supabase (PostgreSQL) |
+
+---
+
+## 🚀 快速开始
+
+### 1️⃣ 环境要求
+
+- Python 3.8+
+- pip 包管理器
+- 现代浏览器（Chrome/Firefox/Edge）
+
+### 2️⃣ 安装依赖
 
 ```bash
+# 克隆或下载项目后，进入项目目录
+cd homework_3
+
+# 安装Python依赖
 pip install -r requirements.txt
 ```
 
-### 2. 配置环境变量
+### 3️⃣ 配置环境变量
 
-创建 `.env` 文件：
+创建 `.env` 文件并填入以下配置：
 
 ```env
-# 火山方舟 DeepSeek API
-ARK_API_KEY=your_ark_api_key
+# ============================================================
+# 火山方舟流式语音识别
+# ============================================================
+SPEECH_APP_ID=1356755714
+SPEECH_ACCESS_KEY=oPxND_k8BQJveNLg7Mdq9VXRvKgFnIlP
+SPEECH_SECRET_KEY=Aj8WnzaLDOeWTiIcF9zC-7dN2QPypq6h
+SPEECH_MODEL_ID=Speech_Recognition_Seed_streaming2000000451913596898
+
+# ============================================================
+# 高德地图API
+# ============================================================
+AMAP_API_KEY=62b0a02ed7213d7753d65007051c0c6f
+AMAP_API_SECRET=66a262e19c64cdc1109b2c70dd89fee0
+
+# ============================================================
+# 火山方舟 DeepSeek LLM API（旅行规划）
+# ============================================================
+ARK_API_KEY=f93d8bf5-f42b-4f2d-9268-215593175f37
 ARK_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
-DEEPSEEK_MODEL=your_endpoint_id
+DEEPSEEK_MODEL=ep-20251109191548-z4vdn
 
-# 科大讯飞语音识别
-SPEECH_APP_ID=your_app_id
-SPEECH_ACCESS_KEY=your_access_key
-SPEECH_SECRET_KEY=your_secret_key
+# ============================================================
+# Supabase数据库配置
+# ============================================================
+SUPABASE_URL=https://hfhxiwcuikcmtpcyyevl.supabase.co
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmaHhpd2N1aWtjbXRwY3l5ZXZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1MzczNDksImV4cCI6MjA3ODExMzM0OX0.u9xX7WOMuYq4fBwJI313vc14OfOuSgabylXqUWFSwTQ
 
-# 高德地图
-AMAP_API_KEY=your_amap_key
-
-# Supabase
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_key
-
-# Flask
-FLASK_SECRET_KEY=your_secret_key
+# ============================================================
+# Flask配置
+# ============================================================
+FLASK_SECRET_KEY=your-secret-key-change-in-production
+FLASK_ENV=development
 ```
 
-### 3. 初始化数据库
+> **⚠️ 安全提示**：以上密钥仅供开发测试使用，生产环境请更换为您自己的密钥。
 
-在Supabase SQL编辑器中执行 `database/schema.sql` 文件。
+### 4️⃣ 初始化数据库
 
-**重要**：如果遇到RLS错误，执行：
+在 [Supabase控制台](https://supabase.com) 的SQL编辑器中执行 `database/schema.sql` 文件。
+
+**重要**：如果遇到RLS（行级安全）错误，执行以下SQL：
 
 ```sql
 ALTER TABLE user_preferences DISABLE ROW LEVEL SECURITY;
@@ -66,109 +132,323 @@ ALTER TABLE travel_plans DISABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses DISABLE ROW LEVEL SECURITY;
 ```
 
-### 4. 启动应用
+### 5️⃣ 启动应用
+
+**方式一：使用启动脚本（推荐）**
 
 ```bash
+# Windows
+快速启动.bat
+
+# 或使用Python
 python run.py
 ```
 
-或使用快捷方式：`快速启动.bat`
+**方式二：直接运行**
 
-访问：`http://localhost:8080`
+```bash
+python app.py
+```
 
-## 使用说明
+### 6️⃣ 访问应用
 
-### 1. 注册/登录
-- 首次访问会看到欢迎页面
-- 点击"注册"创建账号
-- 登录后进入主应用界面
+打开浏览器访问：**http://localhost:8080**
 
-### 2. 设置旅游偏好（推荐）
-- 点击"⚙️ 偏好设置"
-- 选择旅行风格、住宿类型、饮食偏好等
-- 保存后，AI会根据偏好生成更个性化的计划
+---
 
-### 3. 生成旅行计划
-- **文字输入**：输入"我想去北京3天，预算5000元"
-- **语音输入**：点击麦克风按钮，说出需求
-- 点击"生成旅行计划"
-- 查看地图和详细行程
+## 📖 使用说明
 
-### 4. 记录费用
-- 点击"💰 费用记录"
-- 选择关联的旅行计划（可选）
-- 添加费用金额、类别、描述
-- 查看费用汇总和统计
+### 第一步：注册/登录
 
-### 5. 管理计划
-- 在"我的旅行计划"列表中查看所有计划
-- 点击计划查看详情
-- 点击🗑️按钮删除不需要的计划
+1. 首次访问会看到欢迎页面
+2. 点击右上角"注册"按钮创建账号
+3. 填写邮箱和密码完成注册
+4. 登录后自动跳转到主应用界面
 
-## 项目结构
+### 第二步：设置旅游偏好（推荐）
+
+1. 点击导航栏的 **"⚙️ 偏好设置"** 按钮
+2. 选择您的旅行偏好：
+   - 旅行风格（休闲、探险、文化等）
+   - 住宿类型（经济型、舒适型、豪华型等）
+   - 饮食偏好（中餐、西餐、素食等）
+   - 交通偏好（公共交通、出租车、租车等）
+   - 活动偏好（博物馆、户外、购物等）
+   - 预算等级（经济、中等、高端）
+   - 行程节奏（轻松、适中、紧凑）
+   - 特殊需求（无障碍、带小孩等）
+3. 点击"保存偏好"
+4. 之后生成的计划会自动结合您的偏好
+
+### 第三步：生成旅行计划
+
+#### 📝 文字输入方式
+
+1. 在输入框中输入旅行需求，例如：
+   ```
+   我想去北京玩3天，预算5000元，喜欢历史文化
+   ```
+2. 点击 **"生成旅行计划"** 按钮
+3. 等待AI生成计划（约10-30秒）
+
+#### 🎤 语音输入方式
+
+1. 点击 **麦克风图标** 按钮
+2. 允许浏览器访问麦克风
+3. 说出您的旅行需求
+4. 点击"停止"按钮
+5. 系统自动识别并生成计划
+
+### 第四步：查看行程
+
+生成的旅行计划包含：
+
+- **📍 地图展示**：右侧地图标记所有景点位置
+- **📅 详细行程**：每日活动安排、时间、地点
+- **🏨 住宿推荐**：具体酒店名称、地址、价格、特色
+- **🍽️ 餐厅推荐**：餐厅名称、菜系、招牌菜、人均消费
+- **🚗 交通建议**：出行方式和路线
+- **💵 预算明细**：各项费用估算
+
+### 第五步：记录费用
+
+1. 点击导航栏的 **"💰 费用记录"** 按钮
+2. 在弹出的模态框中：
+   - 选择关联的旅行计划（可选）
+   - 输入金额
+   - 选择类别（交通、住宿、餐饮、景点、购物、其他）
+   - 选择日期
+   - 填写描述（可选）
+3. 点击"添加"按钮
+4. 查看费用汇总和分类统计
+
+### 第六步：管理计划
+
+- **查看历史计划**：在左侧"我的旅行计划"列表中查看所有计划
+- **加载计划**：点击计划项查看详情
+- **删除计划**：点击计划右侧的 🗑️ 按钮删除不需要的计划
+
+---
+
+## 📂 项目结构
 
 ```
 homework_3/
-├── app.py                    # Flask主应用
-├── config.py                 # 配置管理
-├── run.py                    # 启动脚本
-├── requirements.txt          # Python依赖
-├── .env                      # 环境变量（需自行创建）
-├── 快速启动.bat              # Windows快速启动
-├── database/
-│   └── schema.sql           # 数据库结构
-├── services/                # 服务层
-│   ├── deepseek_service.py  # AI生成服务
+├── 📄 app.py                    # Flask主应用
+├── ⚙️ config.py                 # 配置管理
+├── 🚀 run.py                    # 启动脚本
+├── 📦 requirements.txt          # Python依赖
+├── 🔐 .env                      # 环境变量（需自行创建）
+├── 🪟 快速启动.bat              # Windows快速启动
+├── 📁 database/
+│   └── schema.sql              # 数据库结构
+├── 📁 services/                # 服务层
+│   ├── deepseek_service.py     # AI生成服务
 │   ├── speech_recognition_service.py  # 语音识别
-│   ├── supabase_service.py  # 数据库服务
-│   ├── amap_service.py      # 地图服务
-│   ├── preference_service.py # 偏好设置服务
-│   └── expense_service.py   # 费用记录服务
-├── templates/               # HTML模板
-│   ├── landing.html         # 欢迎页
-│   └── app.html             # 主应用页
-└── static/                  # 静态资源
-    ├── css/
+│   ├── supabase_service.py     # 数据库服务
+│   ├── amap_service.py         # 地图服务
+│   ├── preference_service.py   # 偏好设置服务
+│   └── expense_service.py      # 费用记录服务
+├── 📁 templates/               # HTML模板
+│   ├── landing.html            # 欢迎页
+│   └── app.html                # 主应用页
+└── 📁 static/                  # 静态资源
+    ├── 📁 css/
     │   ├── landing.css
     │   └── style.css
-    └── js/
+    └── 📁 js/
         ├── landing.js
         ├── app.js
         └── audio-recorder.js
 ```
 
-## 常见问题
+---
+
+## 🎨 界面预览
+
+### 欢迎页面
+- 简洁美观的首页
+- 功能介绍和特性展示
+- 快速注册/登录入口
+
+### 主应用界面
+- 左侧：输入区域、我的计划列表
+- 右侧：地图展示、行程详情
+- 顶部：导航栏（偏好设置、费用记录、用户信息）
+
+### 偏好设置模态框
+- 8大类偏好选项
+- 多选和单选结合
+- 实时保存到云端
+
+### 费用记录模态框
+- 费用汇总卡片
+- 添加费用表单
+- 费用列表和删除功能
+
+---
+
+## ❓ 常见问题
 
 ### 1. RLS策略错误
-如果遇到"new row violates row-level security policy"错误：
+
+**问题**：遇到 "new row violates row-level security policy" 错误
+
+**解决方案**：在Supabase SQL编辑器中执行：
 
 ```sql
--- 在Supabase SQL编辑器执行
 ALTER TABLE user_preferences DISABLE ROW LEVEL SECURITY;
 ALTER TABLE travel_plans DISABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses DISABLE ROW LEVEL SECURITY;
 ```
 
-### 2. 语音识别问题
-- 必须使用 `http://localhost:8080` 或 HTTPS
-- 检查浏览器麦克风权限
-- 关闭其他占用麦克风的应用
-- 推荐使用Chrome浏览器
+### 2. 语音识别不工作
 
-### 3. API配置
-确保所有API密钥已正确配置在 `.env` 文件中：
-- 火山方舟DeepSeek API（必需）
-- 科大讯飞语音识别（语音功能必需）
-- 高德地图API（地图功能必需）
-- Supabase配置（数据存储必需）
+**问题**：点击麦克风按钮没有反应或报错
 
-## 注意事项
+**解决方案**：
+- ✅ 必须使用 `http://localhost:8080` 或 HTTPS
+- ✅ 检查浏览器麦克风权限（地址栏左侧图标）
+- ✅ 关闭其他占用麦克风的应用（Zoom、Teams等）
+- ✅ 推荐使用Chrome浏览器
+- ✅ 在浏览器控制台测试：
+  ```javascript
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(stream => { 
+      stream.getTracks().forEach(t => t.stop()); 
+      console.log('麦克风正常'); 
+    })
+    .catch(err => console.error('麦克风错误:', err));
+  ```
 
-- **安全**：不要将 `.env` 文件提交到代码库
-- **浏览器**：推荐使用Chrome、Firefox、Edge等现代浏览器
-- **端口**：默认8080端口，如占用可在 `run.py` 中修改
+### 3. API配置问题
 
-## 许可证
+**问题**：提示API未配置或调用失败
+
+**解决方案**：
+- 检查 `.env` 文件是否存在且配置正确
+- 确认所有API密钥都已填写
+- 验证API密钥是否有效（未过期、未超额）
+- 重启应用使配置生效
+
+### 4. 端口占用
+
+**问题**：启动时提示端口8080已被占用
+
+**解决方案**：
+- 方式一：关闭占用8080端口的程序
+- 方式二：修改 `run.py` 中的端口号：
+  ```python
+  socketio.run(app, host='0.0.0.0', port=8081, debug=True)
+  ```
+
+### 5. 数据库连接失败
+
+**问题**：无法连接到Supabase数据库
+
+**解决方案**：
+- 检查 `SUPABASE_URL` 和 `SUPABASE_KEY` 是否正确
+- 确认网络连接正常
+- 检查Supabase项目是否已暂停（免费版会自动暂停）
+- 在Supabase控制台检查数据库表是否已创建
+
+---
+
+## 🔒 安全注意事项
+
+1. **API密钥安全**
+   - ⚠️ 不要将 `.env` 文件提交到公开代码库
+   - ⚠️ 生产环境请更换所有默认密钥
+   - ⚠️ 定期更新和轮换API密钥
+
+2. **数据隐私**
+   - 用户数据存储在Supabase云端
+   - 建议启用RLS策略保护数据
+   - 定期备份重要数据
+
+3. **浏览器兼容性**
+   - 需要支持WebSocket和MediaRecorder API
+   - 推荐使用Chrome、Firefox、Edge等现代浏览器
+   - 不支持IE浏览器
+
+---
+
+## 🎯 功能路线图
+
+### ✅ 已完成
+- [x] 智能行程规划
+- [x] 语音输入识别
+- [x] 地图展示
+- [x] 用户系统
+- [x] 旅游偏好设置
+- [x] 费用记录管理
+- [x] 计划删除功能
+
+### 🚧 计划中
+- [ ] 多语言支持
+- [ ] 行程分享功能
+- [ ] 费用导出（Excel/PDF）
+- [ ] 天气预报集成
+- [ ] 移动端适配
+- [ ] 离线地图支持
+
+---
+
+## 🤝 贡献指南
+
+欢迎提交Issue和Pull Request！
+
+### 开发环境设置
+
+```bash
+# 克隆项目
+git clone <repository-url>
+
+# 创建虚拟环境
+python -m venv .venv
+
+# 激活虚拟环境
+# Windows
+.venv\Scripts\activate
+# Linux/Mac
+source .venv/bin/activate
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 运行开发服务器
+python run.py
+```
+
+---
+
+## 📄 许可证
 
 本项目仅供学习和研究使用。
 
+---
+
+## 📞 联系方式
+
+如有问题或建议，请提交Issue或联系开发者。
+
+---
+
+## 🙏 致谢
+
+感谢以下服务提供商：
+
+- [火山方舟](https://www.volcengine.com/) - AI大模型和语音识别
+- [高德地图](https://lbs.amap.com/) - 地图服务
+- [Supabase](https://supabase.com/) - 数据库服务
+- [Flask](https://flask.palletsprojects.com/) - Web框架
+
+---
+
+<div align="center">
+
+**⭐ 如果这个项目对您有帮助，请给个Star支持一下！**
+
+Made with ❤️ by AI Travel Planner Team
+
+</div>
