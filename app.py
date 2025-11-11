@@ -31,9 +31,14 @@ supabase_service = SupabaseService()
 amap_service = AmapService()
 
 @app.route('/')
-def index():
-    """主页"""
-    return render_template('index.html')
+def landing():
+    """欢迎页面"""
+    return render_template('landing.html')
+
+@app.route('/app')
+def app_page():
+    """主应用页面（需要登录）"""
+    return render_template('app.html')
 
 @app.route('/api/config', methods=['GET'])
 def get_config():

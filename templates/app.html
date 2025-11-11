@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI旅行规划师</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="logo">✈️ AI旅行规划师</h1>
+            <div class="nav-buttons">
+                <div id="userInfo" class="user-info">
+                    <span id="userEmail" class="user-email"></span>
+                    <button id="logoutBtn" class="btn-logout">退出登录</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 左侧输入面板 -->
+        <div class="left-panel">
+            <div class="input-section">
+                <h2>规划你的旅行</h2>
+                
+                <!-- 输入方式选择 -->
+                <div class="input-method">
+                    <button id="textInputBtn" class="method-btn active">📝 文字输入</button>
+                    <button id="voiceInputBtn" class="method-btn">🎤 语音输入</button>
+                </div>
+
+                <!-- 文字输入 -->
+                <div id="textInputArea" class="input-area">
+                    <textarea id="travelInput" placeholder="例如：我想去日本，5天，预算1万元，喜欢美食和动漫，带孩子" rows="5"></textarea>
+                    <button id="generatePlanBtn" class="btn-primary">生成旅行计划</button>
+                </div>
+
+                <!-- 语音输入 -->
+                <div id="voiceInputArea" class="input-area" style="display: none;">
+                    <div class="voice-recording">
+                        <button id="recordBtn" class="record-btn">
+                            <span class="record-icon">🎤</span>
+                            <span class="record-text">点击开始录音</span>
+                        </button>
+                        <div id="recordingStatus" class="recording-status" style="display: none;">
+                            <div class="pulse"></div>
+                            <span>正在录音...</span>
+                            <button id="stopRecordBtn" class="btn-secondary">停止</button>
+                        </div>
+                        <div id="recognitionResult" class="recognition-result"></div>
+                        <button id="generatePlanFromVoiceBtn" class="btn-primary" onclick="generateTravelPlan()" style="display: none; margin-top: 1rem;">生成旅行计划</button>
+                    </div>
+                </div>
+
+                <!-- 我的计划 -->
+                <div class="my-plans-section">
+                    <h3>我的旅行计划</h3>
+                    <div id="plansList" class="plans-list">
+                        <p class="empty-message">暂无旅行计划</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧地图和行程展示 -->
+        <div class="right-panel">
+            <!-- 地图容器 -->
+            <div id="mapContainer" class="map-container"></div>
+            
+            <!-- 行程详情面板 -->
+            <div id="planDetails" class="plan-details" style="display: none;">
+                <div class="plan-header">
+                    <h3 id="planTitle">旅行计划</h3>
+                    <button id="closePlanBtn" class="close-btn">×</button>
+                </div>
+                <div id="planContent" class="plan-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载提示 -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>正在生成旅行计划...</p>
+    </div>
+
+        <script src="{{ url_for('static', filename='js/audio-recorder.js') }}?v=5"></script>
+        <script src="{{ url_for('static', filename='js/app.js') }}?v=12"></script>
+</body>
+</html>
+

@@ -5,8 +5,41 @@ let currentUser = null;
 let socket = null;
 // isRecording 现在由 audio-recorder.js 管理
 
+// 检查登录状态
+function checkLoginStatus() {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+        // 未登录，跳转到首页
+        window.location.href = '/';
+        return;
+    }
+    
+    try {
+        currentUser = JSON.parse(userStr);
+        // 显示用户信息
+        const userEmailEl = document.getElementById('userEmail');
+        if (userEmailEl && currentUser.email) {
+            userEmailEl.textContent = currentUser.email;
+        }
+    } catch (error) {
+        console.error('解析用户信息失败:', error);
+        localStorage.removeItem('user');
+        window.location.href = '/';
+    }
+}
+
+// 退出登录
+function logout() {
+    localStorage.removeItem('user');
+    currentUser = null;
+    window.location.href = '/';
+}
+
 // 初始化
 document.addEventListener('DOMContentLoaded', async function() {
+    // 检查登录状态
+    checkLoginStatus();
+    
     initSocket();
     await initMap(); // 等待地图初始化完成
     initEventListeners();
@@ -208,21 +241,8 @@ function initEventListeners() {
     document.getElementById('recordBtn').addEventListener('click', startRecording);
     document.getElementById('stopRecordBtn').addEventListener('click', stopRecording);
     
-    // 设置
-    document.getElementById('settingsBtn').addEventListener('click', () => {
-        openModal('settingsModal');
-        loadSettings();
-    });
-    
-    // 登录注册
-    document.getElementById('loginBtn').addEventListener('click', () => openModal('loginModal'));
-    document.getElementById('registerBtn').addEventListener('click', () => openModal('registerModal'));
+    // 退出登录
     document.getElementById('logoutBtn').addEventListener('click', logout);
-    
-    // 表单提交
-    document.getElementById('settingsForm').addEventListener('submit', saveSettings);
-    document.getElementById('loginForm').addEventListener('submit', handleLogin);
-    document.getElementById('registerForm').addEventListener('submit', handleRegister);
     
     // 关闭计划详情
     document.getElementById('closePlanBtn').addEventListener('click', () => {
@@ -563,162 +583,8 @@ async function loadPlan(planId) {
     }
 }
 
-// 模态框
-function openModal(modalId) {
-    document.getElementById(modalId).classList.add('active');
-}
-
-function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
-}
-
-// 加载设置
-async function loadSettings() {
-    try {
-        // 从本地存储加载已保存的配置（如果存在）
-        const savedConfig = localStorage.getItem('api_config');
-        if (savedConfig) {
-            const config = JSON.parse(savedConfig);
-            document.getElementById('iflytekAppId').value = config.iflytek_app_id || '';
-            document.getElementById('iflytekApiKey').value = config.iflytek_api_key || '';
-            document.getElementById('iflytekApiSecret').value = config.iflytek_api_secret || '';
-            document.getElementById('amapApiKey').value = config.amap_api_key || '';
-            document.getElementById('deepseekApiKey').value = config.deepseek_api_key || '';
-            document.getElementById('supabaseUrl').value = config.supabase_url || '';
-            document.getElementById('supabaseKey').value = config.supabase_key || '';
-        }
-    } catch (error) {
-        console.error('加载设置失败:', error);
-    }
-}
-
-// 保存设置
-async function saveSettings(e) {
-    e.preventDefault();
-    
-    const config = {
-        iflytek_app_id: document.getElementById('iflytekAppId').value,
-        iflytek_api_key: document.getElementById('iflytekApiKey').value,
-        iflytek_api_secret: document.getElementById('iflytekApiSecret').value,
-        amap_api_key: document.getElementById('amapApiKey').value,
-        deepseek_api_key: document.getElementById('deepseekApiKey').value,
-        supabase_url: document.getElementById('supabaseUrl').value,
-        supabase_key: document.getElementById('supabaseKey').value
-    };
-    
-    try {
-        const response = await fetch('/api/config', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(config)
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-            // 保存到本地存储（用于前端显示）
-            localStorage.setItem('api_config', JSON.stringify(config));
-            alert('配置保存成功！\n注意：某些配置可能需要重启应用才能生效。');
-            closeModal('settingsModal');
-            // 重新加载配置
-            location.reload();
-        } else {
-            alert('保存失败: ' + data.message);
-        }
-    } catch (error) {
-        console.error('保存设置错误:', error);
-        alert('保存设置时发生错误');
-    }
-}
-
-// 登录
-async function handleLogin(e) {
-    e.preventDefault();
-    
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    
-    try {
-        const response = await fetch('/api/user/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email, password })
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-            currentUser = data.user;
-            updateUserUI();
-            closeModal('loginModal');
-            loadUserPlans();
-        } else {
-            alert('登录失败: ' + data.message);
-        }
-    } catch (error) {
-        console.error('登录错误:', error);
-        alert('登录时发生错误');
-    }
-}
-
-// 注册
-async function handleRegister(e) {
-    e.preventDefault();
-    
-    const email = document.getElementById('registerEmail').value;
-    const password = document.getElementById('registerPassword').value;
-    const name = document.getElementById('registerName').value;
-    
-    try {
-        const response = await fetch('/api/user/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email, password, name })
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-            alert('注册成功，请登录');
-            closeModal('registerModal');
-            openModal('loginModal');
-        } else {
-            alert('注册失败: ' + data.message);
-        }
-    } catch (error) {
-        console.error('注册错误:', error);
-        alert('注册时发生错误');
-    }
-}
-
-// 退出登录
-function logout() {
-    currentUser = null;
-    updateUserUI();
-    document.getElementById('plansList').innerHTML = '<p class="empty-message">暂无旅行计划</p>';
-}
-
-// 更新用户UI
-function updateUserUI() {
-    const loginBtn = document.getElementById('loginBtn');
-    const registerBtn = document.getElementById('registerBtn');
-    const userInfo = document.getElementById('userInfo');
-    const userEmail = document.getElementById('userEmail');
-    
-    if (currentUser) {
-        loginBtn.style.display = 'none';
-        registerBtn.style.display = 'none';
-        userInfo.style.display = 'flex';
-        userEmail.textContent = currentUser.email;
-    } else {
-        loginBtn.style.display = 'block';
-        registerBtn.style.display = 'block';
-        userInfo.style.display = 'none';
-    }
-}
+// 已删除不需要的模态框和登录注册函数
+// 这些功能现在在landing页面处理
 
 // 加载提示
 function showLoading() {

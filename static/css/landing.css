@@ -1,0 +1,557 @@
+/* 全局样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --secondary-color: #64748b;
+    --text-dark: #1e293b;
+    --text-light: #64748b;
+    --bg-light: #f8fafc;
+    --bg-white: #ffffff;
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 
+                 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: var(--text-dark);
+    line-height: 1.6;
+    background-color: var(--bg-light);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+/* 导航栏 */
+.navbar {
+    background: var(--bg-white);
+    box-shadow: var(--shadow-sm);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.logo-icon {
+    font-size: 2rem;
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-outline {
+    padding: 0.5rem 1.5rem;
+    border: 2px solid var(--primary-color);
+    background: transparent;
+    color: var(--primary-color);
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-outline:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary {
+    padding: 0.5rem 1.5rem;
+    border: none;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* 英雄区域 */
+.hero {
+    padding: 6rem 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4rem;
+    min-height: 600px;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="2" fill="white" opacity="0.1"/></svg>');
+    opacity: 0.3;
+}
+
+.hero-content {
+    flex: 1;
+    max-width: 600px;
+    position: relative;
+    z-index: 1;
+}
+
+.hero-title {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    line-height: 1.8;
+    margin-bottom: 2rem;
+    opacity: 0.95;
+}
+
+.btn-hero {
+    padding: 1rem 2.5rem;
+    border: none;
+    background: white;
+    color: var(--primary-color);
+    border-radius: 0.75rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-hero:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+}
+
+.hero-image {
+    flex: 1;
+    position: relative;
+    height: 400px;
+}
+
+.floating-card {
+    position: absolute;
+    background: white;
+    padding: 1.5rem 2rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-xl);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    animation: float 3s ease-in-out infinite;
+}
+
+.floating-card.card-1 {
+    top: 20%;
+    left: 10%;
+    animation-delay: 0s;
+}
+
+.floating-card.card-2 {
+    top: 50%;
+    right: 10%;
+    animation-delay: 1s;
+}
+
+.floating-card.card-3 {
+    bottom: 20%;
+    left: 20%;
+    animation-delay: 2s;
+}
+
+.card-icon {
+    font-size: 2rem;
+}
+
+.card-text {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+/* 功能介绍 */
+.features {
+    padding: 6rem 2rem;
+    background: var(--bg-white);
+}
+
+.section-title {
+    text-align: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 4rem;
+    color: var(--text-dark);
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.feature-card {
+    padding: 2.5rem;
+    background: var(--bg-light);
+    border-radius: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-color);
+}
+
+.feature-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+}
+
+.feature-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-dark);
+}
+
+.feature-description {
+    color: var(--text-light);
+    line-height: 1.8;
+}
+
+/* 使用步骤 */
+.steps {
+    padding: 6rem 2rem;
+    background: var(--bg-light);
+}
+
+.steps-grid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.step-card {
+    flex: 1;
+    min-width: 250px;
+    max-width: 300px;
+    padding: 2rem;
+    background: white;
+    border-radius: 1rem;
+    text-align: center;
+    box-shadow: var(--shadow-md);
+}
+
+.step-number {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 1.5rem;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.step-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--text-dark);
+}
+
+.step-description {
+    color: var(--text-light);
+}
+
+.step-arrow {
+    font-size: 2rem;
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+/* CTA区域 */
+.cta {
+    padding: 6rem 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-align: center;
+}
+
+.cta-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.cta-subtitle {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+    opacity: 0.95;
+}
+
+.btn-cta {
+    padding: 1rem 3rem;
+    border: 3px solid white;
+    background: transparent;
+    color: white;
+    border-radius: 0.75rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-cta:hover {
+    background: white;
+    color: var(--primary-color);
+    transform: scale(1.05);
+}
+
+/* 页脚 */
+.footer {
+    padding: 2rem;
+    background: var(--text-dark);
+    color: white;
+    text-align: center;
+}
+
+/* 模态框 */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 1rem;
+    width: 90%;
+    max-width: 450px;
+    box-shadow: var(--shadow-xl);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    padding: 2rem 2rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: color 0.3s ease;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn:hover {
+    color: var(--text-dark);
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.btn-submit {
+    width: 100%;
+    padding: 0.875rem;
+    border: none;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-submit:hover {
+    background: var(--primary-hover);
+}
+
+.modal-footer-text {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: var(--text-light);
+}
+
+.modal-footer-text a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.modal-footer-text a:hover {
+    text-decoration: underline;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .hero {
+        flex-direction: column;
+        padding: 4rem 1rem;
+        text-align: center;
+    }
+
+    .hero-title {
+        font-size: 2rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+
+    .hero-image {
+        display: none;
+    }
+
+    .section-title {
+        font-size: 2rem;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .steps-grid {
+        flex-direction: column;
+    }
+
+    .step-arrow {
+        transform: rotate(90deg);
+    }
+
+    .nav-container {
+        padding: 1rem;
+    }
+
+    .logo-text {
+        font-size: 1rem;
+    }
+}

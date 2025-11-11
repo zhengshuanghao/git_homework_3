@@ -52,6 +52,31 @@ body {
     gap: 1rem;
 }
 
+.user-email {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.btn-logout {
+    padding: 0.5rem 1.5rem;
+    border: 2px solid #667eea;
+    background: transparent;
+    color: #667eea;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-logout:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
 /* 容器 */
 .container {
     max-width: 1400px;
