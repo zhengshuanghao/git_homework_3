@@ -40,7 +40,7 @@
                 <!-- 文字输入 -->
                 <div id="textInputArea" class="input-area">
                     <textarea id="travelInput" placeholder="例如：我想去日本，5天，预算1万元，喜欢美食和动漫，带孩子" rows="5"></textarea>
-                    <button id="generatePlanBtn" class="btn-primary">生成旅行计划</button>
+                    <button id="generatePlanBtn" class="btn-primary"><span class="btn-spinner" aria-hidden="true"></span>生成旅行计划</button>
                 </div>
 
                 <!-- 语音输入 -->
@@ -56,7 +56,7 @@
                             <button id="stopRecordBtn" class="btn-secondary">停止</button>
                         </div>
                         <div id="recognitionResult" class="recognition-result"></div>
-                        <button id="generatePlanFromVoiceBtn" class="btn-primary" onclick="generateTravelPlan()" style="display: none; margin-top: 1rem;">生成旅行计划</button>
+                        <button id="generatePlanFromVoiceBtn" class="btn-primary" style="display: none; margin-top: 1rem;"><span class="btn-spinner" aria-hidden="true"></span>生成旅行计划</button>
                     </div>
                 </div>
 

@@ -3,6 +3,8 @@ let map = null;
 let markers = [];
 let currentUser = null;
 let socket = null;
+// 防止重复提交生成旅行计划
+let isGeneratingPlan = false;
 // isRecording 现在由 audio-recorder.js 管理
 
 // 检查登录状态
@@ -404,9 +406,27 @@ async function generateTravelPlan() {
         alert('请输入旅行需求');
         return;
     }
-    
+
+    // 防止并发重复提交
+    if (isGeneratingPlan) return;
+    isGeneratingPlan = true;
+
+    // 禁用生成按钮，显示按钮内 spinner，防止多次点击
+    const genBtn = document.getElementById('generatePlanBtn');
+    const genVoiceBtn = document.getElementById('generatePlanFromVoiceBtn');
+    if (genBtn) {
+        genBtn.disabled = true;
+        const s = genBtn.querySelector('.btn-spinner');
+        if (s) s.style.display = 'inline-block';
+    }
+    if (genVoiceBtn) {
+        genVoiceBtn.disabled = true;
+        const s2 = genVoiceBtn.querySelector('.btn-spinner');
+        if (s2) s2.style.display = 'inline-block';
+    }
+
     showLoading();
-    
+
     try {
         const response = await fetch('/api/travel/plan', {
             method: 'POST',
@@ -418,10 +438,10 @@ async function generateTravelPlan() {
                 user_id: currentUser?.id
             })
         });
-        
+
         const data = await response.json();
         hideLoading();
-        
+
         if (data.success) {
             displayTravelPlan(data.plan);
             if (currentUser) {
@@ -434,6 +454,19 @@ async function generateTravelPlan() {
         hideLoading();
         console.error('生成计划错误:', error);
         alert('生成计划时发生错误');
+    } finally {
+        // 恢复按钮、spinner 和状态
+        isGeneratingPlan = false;
+        if (genBtn) {
+            const s = genBtn.querySelector('.btn-spinner');
+            if (s) s.style.display = 'none';
+            genBtn.disabled = false;
+        }
+        if (genVoiceBtn) {
+            const s2 = genVoiceBtn.querySelector('.btn-spinner');
+            if (s2) s2.style.display = 'none';
+            genVoiceBtn.disabled = false;
+        }
     }
 }
 

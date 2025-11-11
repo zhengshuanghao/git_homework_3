@@ -316,8 +316,8 @@ class SpeechRecognitionService:
             # 发送初始化请求
             await self._send_full_request()
             
-            # 启动接收任务
-            asyncio.create_task(self._receive_messages())
+            # 启动接收任务并保存引用，便于后续取消和等待
+            self._receive_task = asyncio.create_task(self._receive_messages())
             
         except aiohttp.ClientError as e:
             error_msg = f"网络连接失败: {str(e)}"
@@ -435,6 +435,10 @@ class SpeechRecognitionService:
                     self.is_connected = False
                     break
                     
+        except (asyncio.CancelledError, GeneratorExit):
+            # 任务被取消或生成器退出，静默结束
+            print("[INFO] 接收任务已取消或生成器退出，退出接收循环")
+            return
         except Exception as e:
             print(f"[X] 接收消息错误: {str(e)}")
             self.is_connected = False
@@ -636,13 +640,29 @@ class SpeechRecognitionService:
         """断开连接"""
         try:
             self.is_connected = False
-            
+            # 先取消接收任务并等待其结束，避免在关闭 loop 时仍有未完成的写操作
+            try:
+                if hasattr(self, '_receive_task') and self._receive_task:
+                    self._receive_task.cancel()
+                    try:
+                        await self._receive_task
+                    except asyncio.CancelledError:
+                        pass
+            except Exception:
+                pass
+
             if self.ws:
-                await self.ws.close()
+                try:
+                    await self.ws.close()
+                except Exception:
+                    pass
                 self.ws = None
-            
+
             if self.session:
-                await self.session.close()
+                try:
+                    await self.session.close()
+                except Exception:
+                    pass
                 self.session = None
             
             # 重置序列号和缓冲区
@@ -735,19 +755,25 @@ class SpeechRecognitionSyncWrapper:
         """停止服务"""
         if self.loop and self.is_running:
             # 发送结束信号
-            asyncio.run_coroutine_threadsafe(
-                self.service.send_end_signal(),
-                self.loop
-            )
-            
-            # 断开连接
-            asyncio.run_coroutine_threadsafe(
-                self.service.disconnect(),
-                self.loop
-            )
-            
+            send_fut = asyncio.run_coroutine_threadsafe(self.service.send_end_signal(), self.loop)
+            # 等待 send_end_signal 完成（短超时）
+            try:
+                send_fut.result(timeout=5)
+            except Exception:
+                pass
+
+            disc_fut = asyncio.run_coroutine_threadsafe(self.service.disconnect(), self.loop)
+            # 等待 disconnect 完成，确保所有任务已清理
+            try:
+                disc_fut.result(timeout=10)
+            except Exception:
+                pass
+
             # 停止事件循环
-            self.loop.call_soon_threadsafe(self.loop.stop)
+            try:
+                self.loop.call_soon_threadsafe(self.loop.stop)
+            except Exception:
+                pass
     
     @property
     def is_connected(self):
