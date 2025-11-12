@@ -222,6 +222,8 @@ def create_travel_plan():
     try:
         data = request.json
         user_input = data.get('input', '')
+        departure_date = data.get('departure_date')
+        trip_days = data.get('trip_days')
         user_id = data.get('user_id')
         
         # 获取用户偏好设置
@@ -229,8 +231,31 @@ def create_travel_plan():
         if user_id and supabase_service.is_configured():
             user_preferences = preference_service.get_user_preferences(user_id)
         
+        # 如果前端提供了出发日期或天数，追加到提示
+        augmented_input = user_input
+        if departure_date:
+            augmented_input = augmented_input + f"\n\n出发日期: {departure_date}"
+        if trip_days:
+            augmented_input = augmented_input + f"\n\n预计出行天数: {trip_days}"
+
         # 使用DeepSeek生成旅行计划（结合用户偏好）
-        plan = deepseek_service.generate_travel_plan(user_input, user_preferences)
+        plan = deepseek_service.generate_travel_plan(augmented_input, user_preferences)
+
+        # 如果模型未返回 duration 字段但前端输入了 trip_days，则填充
+        try:
+            if plan and isinstance(plan, dict):
+                if (not plan.get('duration') or str(plan.get('duration')).strip() == '') and trip_days:
+                    plan['duration'] = str(trip_days)
+                # 填充 total_budget 的默认值
+                if not plan.get('total_budget') and plan.get('budget'):
+                    try:
+                        plan['total_budget'] = float(plan.get('budget'))
+                    except Exception:
+                        plan['total_budget'] = 0
+                if 'total_budget' not in plan:
+                    plan['total_budget'] = plan.get('total_budget', 0)
+        except Exception:
+            pass
         
         # 保存到Supabase
         if user_id and supabase_service.is_configured():

@@ -39,6 +39,16 @@
 
                 <!-- 文字输入 -->
                 <div id="textInputArea" class="input-area">
+                    <div class="form-row" style="gap:0.5rem; align-items:center;">
+                        <div style="flex:1;">
+                            <label for="departureDate" style="display:block; font-size:0.9rem; margin-bottom:0.25rem; color:#333;">出发日期（可选）</label>
+                            <input type="date" id="departureDate" style="width:100%; padding:0.6rem; border:2px solid #e0e0e0; border-radius:6px;" />
+                        </div>
+                        <div style="width:140px;">
+                            <label for="tripDays" style="display:block; font-size:0.9rem; margin-bottom:0.25rem; color:#333;">出行天数（可选）</label>
+                            <input type="number" id="tripDays" min="1" placeholder="天数" style="width:100%; padding:0.6rem; border:2px solid #e0e0e0; border-radius:6px;" />
+                        </div>
+                    </div>
                     <textarea id="travelInput" placeholder="例如：我想去日本，5天，预算1万元，喜欢美食和动漫，带孩子" rows="5"></textarea>
                     <button id="generatePlanBtn" class="btn-primary"><span class="btn-spinner" aria-hidden="true"></span>生成旅行计划</button>
                 </div>
@@ -56,6 +66,16 @@
                             <button id="stopRecordBtn" class="btn-secondary">停止</button>
                         </div>
                         <div id="recognitionResult" class="recognition-result"></div>
+                        <div class="form-row" style="gap:0.5rem; align-items:center; margin-top:0.75rem;">
+                            <div style="flex:1;">
+                                <label for="departureDateVoice" style="display:block; font-size:0.9rem; margin-bottom:0.25rem; color:#333;">出发日期（可选）</label>
+                                <input type="date" id="departureDateVoice" style="width:100%; padding:0.6rem; border:2px solid #e0e0e0; border-radius:6px;" />
+                            </div>
+                            <div style="width:140px;">
+                                <label for="tripDaysVoice" style="display:block; font-size:0.9rem; margin-bottom:0.25rem; color:#333;">出行天数（可选）</label>
+                                <input type="number" id="tripDaysVoice" min="1" placeholder="天数" style="width:100%; padding:0.6rem; border:2px solid #e0e0e0; border-radius:6px;" />
+                            </div>
+                        </div>
                         <button id="generatePlanFromVoiceBtn" class="btn-primary" style="display: none; margin-top: 1rem;"><span class="btn-spinner" aria-hidden="true"></span>生成旅行计划</button>
                     </div>
                 </div>

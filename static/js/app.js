@@ -402,6 +402,26 @@ async function convertAndSendAudio(audioBlob) {
 // 生成旅行计划
 async function generateTravelPlan() {
     const input = document.getElementById('travelInput').value.trim();
+    // 优先使用 voice 区域的日期/天数（如果存在），否则回退到文本区域的控件
+    const departureDateVoiceEl = document.getElementById('departureDateVoice');
+    const tripDaysVoiceEl = document.getElementById('tripDaysVoice');
+    const departureDateTextEl = document.getElementById('departureDate');
+    const tripDaysTextEl = document.getElementById('tripDays');
+
+    let departureDate = '';
+    let tripDays = null;
+
+    if (departureDateVoiceEl && departureDateVoiceEl.value) {
+        departureDate = departureDateVoiceEl.value;
+    } else if (departureDateTextEl && departureDateTextEl.value) {
+        departureDate = departureDateTextEl.value;
+    }
+
+    if (tripDaysVoiceEl && tripDaysVoiceEl.value) {
+        tripDays = parseInt(tripDaysVoiceEl.value, 10);
+    } else if (tripDaysTextEl && tripDaysTextEl.value) {
+        tripDays = parseInt(tripDaysTextEl.value, 10);
+    }
     if (!input) {
         alert('请输入旅行需求');
         return;
@@ -435,7 +455,9 @@ async function generateTravelPlan() {
             },
             body: JSON.stringify({
                 input: input,
-                user_id: currentUser?.id
+                user_id: currentUser?.id,
+                departure_date: departureDate || null,
+                trip_days: tripDays || null
             })
         });
 
@@ -480,7 +502,11 @@ function displayTravelPlan(plan) {
     const planTitle = document.getElementById('planTitle');
     const planContent = document.getElementById('planContent');
     
-    planTitle.textContent = `${plan.destination || '未知目的地'} - ${plan.duration || ''}天`;
+    // Normalize destination and duration display (handle sentinel values from LLM)
+    const dest = (plan.destination && plan.destination !== '未识别') ? plan.destination : '未知目的地';
+    const durationRaw = plan.duration || '';
+    const duration = (durationRaw && durationRaw !== '未指定') ? durationRaw : '';
+    planTitle.textContent = duration ? `${dest} - ${duration}天` : `${dest}`;
     planContent.innerHTML = '';
     
     // 生成行程内容
@@ -521,16 +547,19 @@ function displayTravelPlan(plan) {
         });
     }
     
-    // 显示预算信息
-    if (plan.total_budget) {
-        const budgetDiv = document.createElement('div');
-        budgetDiv.style.padding = '1rem';
-        budgetDiv.style.background = '#f0f0f0';
-        budgetDiv.style.borderRadius = '8px';
-        budgetDiv.style.marginTop = '1rem';
-        budgetDiv.innerHTML = `<strong>总预算: ¥${plan.total_budget}</strong>`;
-        planContent.appendChild(budgetDiv);
+    // 显示预算信息（如果为0或未指定则显示友好提示）
+    const totalBudgetNum = Number(plan.total_budget || 0);
+    const budgetDiv = document.createElement('div');
+    budgetDiv.style.padding = '1rem';
+    budgetDiv.style.background = '#f0f0f0';
+    budgetDiv.style.borderRadius = '8px';
+    budgetDiv.style.marginTop = '1rem';
+    if (totalBudgetNum > 0) {
+        budgetDiv.innerHTML = `<strong>总预算: ¥${totalBudgetNum}</strong>`;
+    } else {
+        budgetDiv.innerHTML = `<strong>总预算: 未指定</strong>`;
     }
+    planContent.appendChild(budgetDiv);
     
     // 显示提示
     if (plan.tips && plan.tips.length > 0) {
