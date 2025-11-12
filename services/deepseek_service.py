@@ -6,6 +6,7 @@ import json
 import os
 import time
 import requests
+import textwrap
 try:
     from volcenginesdkarkruntime import Ark
 except ImportError:
@@ -114,13 +115,14 @@ class DeepSeekService:
 2. 餐厅推荐必须具体，包括餐厅名称、招牌菜、人均消费、地址
 3. 根据用户预算推荐合适档次的酒店和餐厅
 4. 考虑用户的偏好设置（如有）
+5. **必须返回完整的、格式正确的JSON，不要截断**
 
 请以JSON格式返回，包含以下字段：
 {
     "destination": "目的地",
-    "duration": "天数",
-    "budget": "预算",
-    "people": "人数",
+    "duration": 5,
+    "budget": 5000,
+    "people": 1,
     "preferences": ["偏好1", "偏好2"],
     "itinerary": [
         {
@@ -141,21 +143,21 @@ class DeepSeekService:
                     },
                     "location": {
                         "name": "地点名称",
-                        "lng": 经度,
-                        "lat": 纬度
+                        "lng": 104.06,
+                        "lat": 30.67
                     },
-                    "cost": 费用,
+                    "cost": 100,
                     "duration": "预计时长"
                 }
             ],
-            "total_cost": 当日总费用
+            "total_cost": 500
         }
     ],
     "accommodation_summary": [
         {
             "hotel_name": "酒店名称",
-            "nights": 入住晚数,
-            "total_cost": 总费用,
+            "nights": 4,
+            "total_cost": 1200,
             "address": "地址",
             "features": ["特色1", "特色2"]
         }
@@ -165,15 +167,15 @@ class DeepSeekService:
             "name": "餐厅名称",
             "cuisine": "菜系",
             "signature_dishes": ["招牌菜1", "招牌菜2"],
-            "avg_cost": 人均消费,
+            "avg_cost": 80,
             "address": "地址"
         }
     ],
-    "total_budget": 总预算,
+    "total_budget": 5000,
     "tips": ["建议1", "建议2"]
 }
 
-请确保返回的是有效的JSON格式，不要包含其他文字。"""
+**关键：请确保返回的是完整的、有效的JSON格式，所有括号和引号必须闭合，不要包含其他文字或注释。**"""
         
         # 构建完整的用户输入
         full_input = user_input
@@ -192,33 +194,153 @@ class DeepSeekService:
         ]
         
         try:
-            response = self._call_api(messages, temperature=0.7, max_tokens=4000)
+            # 增加 max_tokens 以确保响应不被截断
+            response = self._call_api(messages, temperature=0.7, max_tokens=8000)
             
-            # 尝试解析JSON响应
-            try:
-                # 去除可能的markdown代码块标记
-                if "```json" in response:
-                    response = response.split("```json")[1].split("```")[0].strip()
-                elif "```" in response:
-                    response = response.split("```")[1].split("```")[0].strip()
-                
-                plan = json.loads(response)
-                return plan
-            except json.JSONDecodeError:
-                # 如果解析失败，返回结构化文本
-                return {
-                    "destination": "未识别",
-                    "duration": "未指定",
-                    "budget": "未指定",
-                    "people": "未指定",
-                    "preferences": [],
-                    "itinerary": [],
-                    "total_budget": 0,
-                    "tips": [],
-                    "raw_response": response
-                }
+            print(f"[DeepSeekService] 收到响应，长度: {len(response)} 字符")
+            print(f"[DeepSeekService] 响应前200字符: {response[:200]}")
+            print(f"[DeepSeekService] 响应后200字符: {response[-200:]}")
+            
+            parsed_plan = self._parse_plan_response(response)
+            if parsed_plan is not None:
+                print("[DeepSeekService] JSON 解析成功")
+                return parsed_plan
+            
+            # 兜底：返回包含原始响应的占位结构
+            cleaned_response = self._strip_code_fences(str(response))
+            print("[DeepSeekService] 无法解析模型响应，返回占位数据。")
+            print(f"[DeepSeekService] 完整响应: {cleaned_response}")
+            return {
+                "destination": "未识别",
+                "duration": "未指定",
+                "budget": "未指定",
+                "people": "未指定",
+                "preferences": [],
+                "itinerary": [],
+                "total_budget": 0,
+                "tips": [],
+                "raw_response": cleaned_response
+            }
         except Exception as e:
+            print(f"[DeepSeekService] 生成旅行计划异常: {str(e)}")
+            import traceback
+            traceback.print_exc()
             raise Exception(f"生成旅行计划失败: {str(e)}")
+    
+    # ------------------------- 辅助方法 -------------------------
+    def _strip_code_fences(self, text):
+        """移除 Markdown 代码块包裹"""
+        if not text:
+            return text
+        stripped = text.strip()
+        if stripped.startswith("```"):
+            parts = stripped.split("```")
+            # 可能形式：```json ... ``` 或 ``` ... ```
+            if len(parts) >= 3:
+                return parts[1 if parts[1].strip() else 2].strip()
+            return parts[-1].strip()
+        # 处理可能的 "json" 或 "JSON" 前缀
+        lowered = stripped.lower()
+        if lowered.startswith("json") and len(stripped) > 4:
+            remainder = stripped[4:]
+            if remainder[:1].isspace() or remainder[:1] in ("{", "["):
+                return remainder.lstrip()
+        return stripped
+    
+    def _extract_json_candidate(self, text):
+        """尝试从文本中提取最大 JSON 对象"""
+        if not text:
+            return None
+        start = text.find("{")
+        end = text.rfind("}")
+        if start == -1 or end == -1 or end <= start:
+            return None
+        return text[start:end + 1]
+    
+    def _parse_plan_response(self, response_text):
+        """解析模型返回的文本为 JSON。必要时尝试一次自动修复。"""
+        if not response_text:
+            print("[DeepSeekService] 响应为空")
+            return None
+            
+        cleaned = self._strip_code_fences(response_text)
+        candidates = []
+        if cleaned:
+            candidates.append(cleaned)
+            extracted = self._extract_json_candidate(cleaned)
+            if extracted and extracted not in candidates:
+                candidates.append(extracted)
+        
+        # 尝试解析所有候选项
+        for i, candidate in enumerate(candidates):
+            if not candidate:
+                continue
+            try:
+                parsed = json.loads(candidate)
+                print(f"[DeepSeekService] 候选项 {i+1} 解析成功")
+                return parsed
+            except json.JSONDecodeError as e:
+                print(f"[DeepSeekService] 候选项 {i+1} 解析失败: {str(e)}")
+                print(f"[DeepSeekService] 失败位置: 第 {e.lineno} 行, 第 {e.colno} 列")
+                print(f"[DeepSeekService] 错误附近内容: {candidate[max(0, e.pos-50):min(len(candidate), e.pos+50)]}")
+        
+        # 若直接解析失败，尝试让模型自我修复一次
+        print("[DeepSeekService] 尝试自动修复 JSON...")
+        repaired = self._attempt_repair_json(cleaned or response_text)
+        if repaired:
+            try:
+                parsed = json.loads(repaired)
+                print("[DeepSeekService] 修复后的 JSON 解析成功")
+                return parsed
+            except json.JSONDecodeError as e:
+                print(f"[DeepSeekService] 修复后的 JSON 仍然解析失败: {str(e)}")
+                # 再次直接解析失败，尝试截取主体后重试
+                extracted = self._extract_json_candidate(repaired)
+                if extracted:
+                    try:
+                        parsed = json.loads(extracted)
+                        print("[DeepSeekService] 从修复结果中提取的 JSON 解析成功")
+                        return parsed
+                    except json.JSONDecodeError as e2:
+                        print(f"[DeepSeekService] 提取后仍然失败: {str(e2)}")
+        
+        print("[DeepSeekService] 所有解析尝试均失败")
+        return None
+    
+    def _attempt_repair_json(self, raw_text):
+        """调用模型将输出修正为合法 JSON"""
+        if not raw_text:
+            return None
+        try:
+            repair_prompt = textwrap.dedent(
+                """
+                你是一个严格的JSON修复工具。请将下面的内容转换为**完整的、合法的JSON字符串**：
+                - 严格遵循JSON标准：使用双引号、不能有注释、不能有悬挂逗号
+                - 确保所有括号、引号都正确闭合
+                - 不要添加任何解释或额外文本，只输出 JSON 本身
+                - 如果内容被截断，请补全缺失的部分（根据上下文推断合理值）
+                - 如果内容中缺失字段，可根据上下文推断合理值；无法确定时使用空字符串、0 或空数组
+                - 确保返回的JSON是完整的，可以被 json.loads() 成功解析
+                """
+            ).strip()
+            
+            messages = [
+                {"role": "system", "content": repair_prompt},
+                {
+                    "role": "user",
+                    "content": f"原始内容（可能不完整或格式错误）：\n{raw_text[:3000]}\n\n请输出修复后的完整JSON："
+                }
+            ]
+            print("[DeepSeekService] 调用模型修复 JSON...")
+            repaired = self._call_api(messages, temperature=0.0, max_tokens=8000)
+            cleaned = self._strip_code_fences(repaired)
+            print(f"[DeepSeekService] 修复后的 JSON 长度: {len(cleaned)} 字符")
+            return cleaned
+        except Exception as repair_error:
+            print(f"[DeepSeekService] JSON修复调用失败: {repair_error}")
+            import traceback
+            traceback.print_exc()
+            return None
     
     def estimate_budget(self, travel_plan):
         """估算费用预算"""
