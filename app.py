@@ -143,13 +143,13 @@ def save_config_to_env():
             'flask_secret_key': 'FLASK_SECRET_KEY'
         }
         
-        # 更新配置
+        # 更新配置：将前端提交的字段写入 env_lines，并记录已更新键
         updated_keys = []
         for field_name, env_name in field_mapping.items():
             if field_name in config_data:
                 env_lines[env_name] = config_data[field_name]
                 updated_keys.append(env_name)
-        
+
         # 写回.env文件
         with open(env_path, 'w', encoding='utf-8') as f:
             f.write('# ============================================================\n')
@@ -190,23 +190,86 @@ def save_config_to_env():
             f.write(f"FLASK_SECRET_KEY={env_lines.get('FLASK_SECRET_KEY', 'your-secret-key-change-in-production')}\n")
             f.write(f"FLASK_ENV={env_lines.get('FLASK_ENV', 'development')}\n")
         
-        # 重新加载配置
+        # 重新加载配置文件（config.json）以及 .env 环境变量，并使运行中的 Flask 应用/服务使用新的值
         Config.load_from_file()
-        
-        # 重新初始化服务
-        global deepseek_service, speech_recognition_service, supabase_service, amap_service
-        deepseek_service = DeepSeekService()
-        speech_recognition_service = SpeechRecognitionSyncWrapper(
-            app_id=Config.SPEECH_APP_ID,
-            access_key=Config.SPEECH_ACCESS_KEY,
-            secret_key=Config.SPEECH_SECRET_KEY,
-            model_id=Config.SPEECH_MODEL_ID
-        )
-        supabase_service = SupabaseService()
-        amap_service = AmapService()
-        
+
+        # 重新加载 .env 到当前进程环境（覆盖同名变量），确保后续 Config 从 os.environ 读取到最新值
+        try:
+            from dotenv import load_dotenv
+            load_dotenv(env_path, override=True)
+        except Exception:
+            # 如果缺少 python-dotenv，也可以手动将写入的 env_lines 覆盖 os.environ
+            for k, v in env_lines.items():
+                os.environ[k] = v
+
+        # 将环境变量值同步到 Config 类属性（以便 app.config.from_object 能读取到最新值）
+        Config.SPEECH_APP_ID = os.getenv('SPEECH_APP_ID', Config.SPEECH_APP_ID)
+        Config.SPEECH_ACCESS_KEY = os.getenv('SPEECH_ACCESS_KEY', Config.SPEECH_ACCESS_KEY)
+        Config.SPEECH_SECRET_KEY = os.getenv('SPEECH_SECRET_KEY', Config.SPEECH_SECRET_KEY)
+        Config.SPEECH_MODEL_ID = os.getenv('SPEECH_MODEL_ID', Config.SPEECH_MODEL_ID)
+        Config.AMAP_API_KEY = os.getenv('AMAP_API_KEY', Config.AMAP_API_KEY)
+        Config.AMAP_API_SECRET = os.getenv('AMAP_API_SECRET', Config.AMAP_API_SECRET)
+        Config.DEEPSEEK_API_KEY = os.getenv('ARK_API_KEY', Config.DEEPSEEK_API_KEY)
+        Config.ARK_BASE_URL = os.getenv('ARK_BASE_URL', Config.ARK_BASE_URL)
+        Config.DEEPSEEK_MODEL = os.getenv('DEEPSEEK_MODEL', Config.DEEPSEEK_MODEL)
+        Config.SUPABASE_URL = os.getenv('SUPABASE_URL', Config.SUPABASE_URL)
+        Config.SUPABASE_KEY = os.getenv('SUPABASE_KEY', Config.SUPABASE_KEY)
+        Config.SECRET_KEY = os.getenv('FLASK_SECRET_KEY', Config.SECRET_KEY)
+
+        # 将更新后的 Config 同步到 Flask app.config（静默失败）
+        try:
+            app.config.from_object(Config)
+        except Exception:
+            pass
+
+        # 重新初始化服务以使用新配置；如果创建失败则回退到现有实例（安全重试）
+        global deepseek_service, speech_recognition_service, supabase_service, amap_service, preference_service, expense_service
+
+        existing_deepseek = globals().get('deepseek_service')
+        existing_speech = globals().get('speech_recognition_service')
+        existing_supabase = globals().get('supabase_service')
+        existing_amap = globals().get('amap_service')
+
+        # 加载最新的 config.json（如有必要）
+        try:
+            Config.load_from_file()
+        except Exception:
+            pass
+
+        # 创建新的 service 实例（失败则回退）
+        try:
+            new_deepseek = DeepSeekService()
+        except Exception:
+            new_deepseek = existing_deepseek
+
+        try:
+            new_speech = SpeechRecognitionSyncWrapper(
+                app_id=Config.SPEECH_APP_ID,
+                access_key=Config.SPEECH_ACCESS_KEY,
+                secret_key=Config.SPEECH_SECRET_KEY,
+                model_id=Config.SPEECH_MODEL_ID
+            )
+        except Exception:
+            new_speech = existing_speech
+
+        try:
+            new_supabase = SupabaseService()
+        except Exception:
+            new_supabase = existing_supabase
+
+        try:
+            new_amap = AmapService()
+        except Exception:
+            new_amap = existing_amap
+
+        # 指定回退或新的实例到全局变量
+        deepseek_service = new_deepseek
+        speech_recognition_service = new_speech
+        supabase_service = new_supabase
+        amap_service = new_amap
+
         return jsonify({
-            'success': True, 
+            'success': True,
             'message': f'成功更新 {len(updated_keys)} 项配置',
             'updated_keys': updated_keys
         })
